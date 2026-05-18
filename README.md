@@ -101,9 +101,9 @@ Alertas inteligentes
 O objetivo do aplicativo é facilitar o gerenciamento e acompanhamento da saúde dos pets de maneira simples, intuitiva e acessível.
 
 ## Integrantes 
-Vitor Augusto Oliveira de Abreu
-André Bellandi Vital Rodrigues
-Matheus Silva Moratti
+Vitor Augusto Oliveira de Abreu RM 564227
+André Bellandi Vital Rodrigues RM 564662
+Gabriel Garcia Mayo Delatore RM 563298
 
 ## Disciplina 
 Mobile Application Development
