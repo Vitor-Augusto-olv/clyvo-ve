@@ -1,6 +1,8 @@
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
+
 
 export default function Perfil() {
   const [nome, setNome] = useState('');
@@ -8,6 +10,7 @@ export default function Perfil() {
   const [telefone, setTelefone] = useState('');
 
   useEffect(() => {
+    verificarLogin();
     carregarPerfil();
   }, []);
 
@@ -39,6 +42,19 @@ export default function Perfil() {
     }
   };
 
+  const logout = async () => {
+    await AsyncStorage.removeItem('@usuarioLogado');
+    router.replace('/login');
+  };
+
+  const verificarLogin = async () => {
+    const usuario = await AsyncStorage.getItem('@usuarioLogado');
+
+    if (!usuario) {
+      router.replace('/login');
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -57,6 +73,14 @@ export default function Perfil() {
         <TouchableOpacity style={styles.button} onPress={salvarPerfil}>
           <Text style={styles.buttonText}>Salvar Perfil</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.button, { backgroundColor: '#555', marginTop: 15 }]} 
+          onPress={logout}
+        >
+          <Text style={styles.buttonText}>Logout</Text>
+        </TouchableOpacity>
+
       </View>
     </ScrollView>
   );
