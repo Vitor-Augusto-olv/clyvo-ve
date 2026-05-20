@@ -70,9 +70,7 @@ export default function Perfil() {
         <Text style={styles.label}>Telefone</Text>
         <TextInput style={styles.input} placeholder="Seu telefone" value={telefone} onChangeText={setTelefone} keyboardType="phone-pad" />
 
-        <TouchableOpacity style={styles.button} onPress={salvarPerfil}>
-          <Text style={styles.buttonText}>Salvar Perfil</Text>
-        </TouchableOpacity>
+        
 
         <TouchableOpacity 
           style={[styles.button, { backgroundColor: '#555', marginTop: 15 }]} 
