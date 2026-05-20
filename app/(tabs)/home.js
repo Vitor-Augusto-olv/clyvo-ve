@@ -7,10 +7,17 @@ import {
 } from 'react-native';
 
 import { useRouter } from 'expo-router';
-
 import { useEffect, useState } from 'react';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import COLORS from '../../constants/colors';
+
+import {
+  MaterialIcons,
+  FontAwesome5,
+  Ionicons
+} from '@expo/vector-icons';
 
 export default function Home() {
 
@@ -19,9 +26,7 @@ export default function Home() {
   const [nomeUsuario, setNomeUsuario] = useState('');
 
   useEffect(() => {
-
     carregarUsuario();
-
   }, []);
 
   const carregarUsuario = async () => {
@@ -43,29 +48,101 @@ export default function Home() {
       console.log('Erro ao carregar usuário');
 
     }
+
   };
 
   return (
 
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
+
+      {/* HEADER */}
 
       <View style={styles.header}>
 
         <Text style={styles.headerText}>
-          Olá, {nomeUsuario}! 👋
+          Olá, {nomeUsuario || 'Tutor'} 👋
         </Text>
 
         <Text style={styles.headerSubtext}>
-          Como está seu pet hoje?
+          Acompanhe a saúde do seu pet em tempo real
         </Text>
 
       </View>
 
+      {/* STATUS RÁPIDO */}
+
+      <View style={styles.quickStatusContainer}>
+
+        <View style={styles.quickCard}>
+
+          <Ionicons
+            name="medkit"
+            size={24}
+            color={COLORS.accent}
+          />
+
+          <Text style={styles.quickNumber}>3</Text>
+
+          <Text style={styles.quickLabel}>
+            Vacinas
+          </Text>
+
+        </View>
+
+        <View style={styles.quickCard}>
+
+          <MaterialIcons
+            name="pets"
+            size={24}
+            color={COLORS.accent}
+          />
+
+          <Text style={styles.quickNumber}>1</Text>
+
+          <Text style={styles.quickLabel}>
+            Pets
+          </Text>
+
+        </View>
+
+        <View style={styles.quickCard}>
+
+          <Ionicons
+            name="calendar"
+            size={24}
+            color={COLORS.accent}
+          />
+
+          <Text style={styles.quickNumber}>2</Text>
+
+          <Text style={styles.quickLabel}>
+            Consultas
+          </Text>
+
+        </View>
+
+      </View>
+
+      {/* CARD AÇÕES */}
+
       <View style={styles.card}>
 
-        <Text style={styles.cardTitle}>
-          🐶 Próximas ações
-        </Text>
+        <View style={styles.titleContainer}>
+
+          <FontAwesome5
+            name="dog"
+            size={18}
+            color={COLORS.accent}
+          />
+
+          <Text style={styles.cardTitle}>
+            Próximas ações
+          </Text>
+
+        </View>
 
         <Text style={styles.cardItem}>
           💉 Vacina V10 — vence em 5 dias
@@ -81,11 +158,23 @@ export default function Home() {
 
       </View>
 
+      {/* CARD RESUMO */}
+
       <View style={styles.card}>
 
-        <Text style={styles.cardTitle}>
-          📊 Resumo de Saúde
-        </Text>
+        <View style={styles.titleContainer}>
+
+          <Ionicons
+            name="analytics"
+            size={20}
+            color={COLORS.accent}
+          />
+
+          <Text style={styles.cardTitle}>
+            Resumo de Saúde
+          </Text>
+
+        </View>
 
         <Text style={styles.cardItem}>
           ✅ Vacinas em dia
@@ -101,6 +190,90 @@ export default function Home() {
 
       </View>
 
+      {/* SERVIÇOS */}
+
+      <View style={styles.servicesContainer}>
+
+        <Text style={styles.servicesTitle}>
+          Serviços
+        </Text>
+
+        {/* AGENDAR */}
+
+        <TouchableOpacity
+          style={styles.serviceButton}
+          onPress={() => router.push('/agendar')}
+        >
+
+          <View style={styles.serviceContent}>
+
+            <MaterialIcons
+              name="event"
+              size={22}
+              color="#fff"
+              style={styles.iconSpacing}
+            />
+
+            <Text style={styles.serviceText}>
+              Agendar Consulta
+            </Text>
+
+          </View>
+
+        </TouchableOpacity>
+
+        {/* VACINAS */}
+
+        <TouchableOpacity
+          style={styles.serviceButton}
+          onPress={() => router.push('/vacinas')}
+        >
+
+          <View style={styles.serviceContent}>
+
+            <FontAwesome5
+              name="syringe"
+              size={18}
+              color="#fff"
+              style={styles.iconSpacing}
+            />
+
+            <Text style={styles.serviceText}>
+              Carteira de Vacinação
+            </Text>
+
+          </View>
+
+        </TouchableOpacity>
+
+        {/* HISTÓRICO */}
+
+        <TouchableOpacity
+          style={styles.serviceButton}
+          onPress={() => router.push('/historico')}
+        >
+
+          <View style={styles.serviceContent}>
+
+            <MaterialIcons
+              name="history"
+              size={22}
+              color="#fff"
+              style={styles.iconSpacing}
+            />
+
+            <Text style={styles.serviceText}>
+              Histórico do Pet
+            </Text>
+
+          </View>
+
+        </TouchableOpacity>
+
+      </View>
+
+      {/* BOTÃO */}
+
       <TouchableOpacity
         style={styles.button}
         onPress={() => router.push('/cadastrar')}
@@ -113,66 +286,170 @@ export default function Home() {
       </TouchableOpacity>
 
     </ScrollView>
+
   );
+
 }
 
 const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.background,
   },
 
   header: {
-    backgroundColor: '#1a3c5e',
+    backgroundColor: COLORS.primary,
     padding: 25,
-    paddingTop: 40,
+    paddingTop: 55,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
 
   headerText: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#fff',
+    color: COLORS.white,
   },
 
   headerSubtext: {
-    fontSize: 14,
-    color: '#a8c8e8',
-    marginTop: 5,
+    fontSize: 15,
+    color: '#C7D7EA',
+    marginTop: 6,
+  },
+
+  quickStatusContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: 16,
+    marginTop: -25,
+  },
+
+  quickCard: {
+    backgroundColor: COLORS.white,
+    width: '31%',
+    borderRadius: 20,
+    padding: 16,
+    alignItems: 'center',
+
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+
+    elevation: 5,
+  },
+
+  quickNumber: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginTop: 8,
+  },
+
+  quickLabel: {
+    fontSize: 13,
+    color: COLORS.textLight,
+    marginTop: 4,
   },
 
   card: {
-    backgroundColor: '#fff',
-    margin: 15,
-    marginBottom: 5,
+    backgroundColor: COLORS.white,
+
+    marginHorizontal: 16,
+    marginTop: 16,
+
     padding: 20,
-    borderRadius: 12,
-    elevation: 2,
+
+    borderRadius: 22,
+
+    shadowColor: '#000',
+
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+
+    shadowOpacity: 0.08,
+
+    shadowRadius: 10,
+
+    elevation: 5,
+  },
+
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
   },
 
   cardTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#1a3c5e',
-    marginBottom: 10,
+    color: COLORS.primary,
+    marginLeft: 10,
   },
 
   cardItem: {
-    fontSize: 14,
-    color: '#555',
-    marginBottom: 6,
+    fontSize: 15,
+    color: COLORS.textLight,
+    marginBottom: 10,
+  },
+
+  servicesContainer: {
+    marginTop: 20,
+    paddingHorizontal: 16,
+  },
+
+  servicesTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 15,
+  },
+
+  serviceButton: {
+    backgroundColor: COLORS.secondary,
+    padding: 18,
+    borderRadius: 18,
+    marginBottom: 12,
+  },
+
+  serviceContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  iconSpacing: {
+    marginRight: 12,
+  },
+
+  serviceText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '600',
   },
 
   button: {
-    backgroundColor: '#e8335a',
-    margin: 15,
-    padding: 15,
-    borderRadius: 12,
+    backgroundColor: COLORS.accent,
+
+    marginHorizontal: 16,
+    marginTop: 20,
+    marginBottom: 30,
+
+    padding: 18,
+
+    borderRadius: 18,
+
     alignItems: 'center',
   },
 
   buttonText: {
-    color: '#fff',
+    color: COLORS.white,
     fontSize: 16,
     fontWeight: 'bold',
   },

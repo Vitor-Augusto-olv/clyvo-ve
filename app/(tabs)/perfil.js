@@ -1,96 +1,360 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TextInput, 
+  TouchableOpacity, 
+  ScrollView, 
+  Alert 
+} from 'react-native';
+
 import { useState, useEffect } from 'react';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { router } from 'expo-router';
 
+import COLORS from '../../constants/colors';
 
 export default function Perfil() {
+
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [telefone, setTelefone] = useState('');
 
   useEffect(() => {
+
     verificarLogin();
     carregarPerfil();
+
   }, []);
 
   const carregarPerfil = async () => {
+
     try {
+
       const dados = await AsyncStorage.getItem('@perfil');
+
       if (dados) {
+
         const perfil = JSON.parse(dados);
+
         setNome(perfil.nome);
         setEmail(perfil.email);
         setTelefone(perfil.telefone);
+
       }
+
     } catch (e) {
+
       console.log('Erro ao carregar perfil', e);
+
     }
+
   };
 
   const salvarPerfil = async () => {
+
     if (!nome || !email || !telefone) {
-      Alert.alert('Atenção', 'Preencha todos os campos!');
+
+      Alert.alert(
+        'Atenção',
+        'Preencha todos os campos!'
+      );
+
       return;
+
     }
+
     try {
-      const perfil = { nome, email, telefone };
-      await AsyncStorage.setItem('@perfil', JSON.stringify(perfil));
-      Alert.alert('Sucesso', 'Perfil salvo com sucesso!');
+
+      const perfil = {
+        nome,
+        email,
+        telefone
+      };
+
+      await AsyncStorage.setItem(
+        '@perfil',
+        JSON.stringify(perfil)
+      );
+
+      Alert.alert(
+        'Sucesso',
+        'Perfil atualizado com sucesso!'
+      );
+
     } catch (e) {
-      Alert.alert('Erro', 'Não foi possível salvar o perfil.');
+
+      Alert.alert(
+        'Erro',
+        'Não foi possível salvar o perfil.'
+      );
+
     }
+
   };
 
   const logout = async () => {
+
     await AsyncStorage.removeItem('@usuarioLogado');
+
     router.replace('/login');
+
   };
 
   const verificarLogin = async () => {
+
     const usuario = await AsyncStorage.getItem('@usuarioLogado');
 
     if (!usuario) {
+
       router.replace('/login');
+
     }
+
   };
 
   return (
+
     <ScrollView style={styles.container}>
+
       <View style={styles.header}>
-        <Text style={styles.headerText}>👤 Meu Perfil</Text>
+
+        <View style={styles.avatar}>
+
+          <Text style={styles.avatarText}>
+            {nome ? nome.charAt(0).toUpperCase() : 'U'}
+          </Text>
+
+        </View>
+
+        <Text style={styles.headerTitle}>
+          {nome || 'Usuário'}
+        </Text>
+
+        <Text style={styles.headerSubtitle}>
+          Gerencie suas informações
+        </Text>
+
       </View>
+
       <View style={styles.form}>
-        <Text style={styles.label}>Nome</Text>
-        <TextInput style={styles.input} placeholder="Seu nome" value={nome} onChangeText={setNome} />
 
-        <Text style={styles.label}>E-mail</Text>
-        <TextInput style={styles.input} placeholder="Seu e-mail" value={email} onChangeText={setEmail} keyboardType="email-address" />
+        <View style={styles.card}>
 
-        <Text style={styles.label}>Telefone</Text>
-        <TextInput style={styles.input} placeholder="Seu telefone" value={telefone} onChangeText={setTelefone} keyboardType="phone-pad" />
+          <Text style={styles.sectionTitle}>
+            Informações pessoais
+          </Text>
 
-        
+          <Text style={styles.label}>
+            Nome completo
+          </Text>
 
-        <TouchableOpacity 
-          style={[styles.button, { backgroundColor: '#555', marginTop: 15 }]} 
+          <TextInput
+            style={styles.input}
+            placeholder="Digite seu nome"
+            placeholderTextColor={COLORS.subtext}
+            value={nome}
+            onChangeText={setNome}
+          />
+
+          <Text style={styles.label}>
+            E-mail
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Digite seu e-mail"
+            placeholderTextColor={COLORS.subtext}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+          />
+
+          <Text style={styles.label}>
+            Telefone
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Digite seu telefone"
+            placeholderTextColor={COLORS.subtext}
+            value={telefone}
+            onChangeText={setTelefone}
+            keyboardType="phone-pad"
+          />
+
+        </View>
+
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={salvarPerfil}
+        >
+
+          <Text style={styles.buttonText}>
+            Salvar alterações
+          </Text>
+
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.logoutButton}
           onPress={logout}
         >
-          <Text style={styles.buttonText}>Logout</Text>
+
+          <Text style={styles.logoutText}>
+            Sair da conta
+          </Text>
+
         </TouchableOpacity>
 
       </View>
+
     </ScrollView>
+
   );
+
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  header: { backgroundColor: '#1a3c5e', padding: 25 },
-  headerText: { fontSize: 22, fontWeight: 'bold', color: '#fff' },
-  form: { padding: 20 },
-  label: { fontSize: 14, fontWeight: 'bold', color: '#1a3c5e', marginBottom: 5, marginTop: 15 },
-  input: { backgroundColor: '#fff', padding: 12, borderRadius: 10, fontSize: 15, elevation: 1 },
-  button: { backgroundColor: '#e8335a', padding: 15, borderRadius: 12, alignItems: 'center', marginTop: 30 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-}); 
+
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+
+  header: {
+    backgroundColor: COLORS.primary,
+
+    padding: 30,
+    paddingTop: 60,
+
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+
+    alignItems: 'center',
+  },
+
+  avatar: {
+    width: 90,
+    height: 90,
+
+    borderRadius: 50,
+
+    backgroundColor: COLORS.accent,
+
+    justifyContent: 'center',
+    alignItems: 'center',
+
+    marginBottom: 15,
+  },
+
+  avatarText: {
+    color: '#fff',
+    fontSize: 36,
+    fontWeight: 'bold',
+  },
+
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+
+  headerSubtitle: {
+    fontSize: 15,
+    color: '#B6C2CF',
+    marginTop: 5,
+  },
+
+  form: {
+    padding: 20,
+  },
+
+  card: {
+    backgroundColor: COLORS.card,
+
+    borderRadius: 24,
+
+    padding: 22,
+
+    borderWidth: 1,
+    borderColor: COLORS.border,
+
+    shadowColor: '#000',
+
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+
+    elevation: 5,
+  },
+
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 10,
+  },
+
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 8,
+    marginTop: 15,
+  },
+
+  input: {
+    backgroundColor: '#fff',
+
+    borderWidth: 1,
+    borderColor: COLORS.border,
+
+    borderRadius: 16,
+
+    padding: 16,
+
+    fontSize: 15,
+
+    color: COLORS.text,
+
+    marginBottom: 5,
+  },
+
+  saveButton: {
+    backgroundColor: COLORS.accent,
+
+    padding: 16,
+
+    borderRadius: 16,
+
+    alignItems: 'center',
+
+    marginTop: 25,
+  },
+
+  logoutButton: {
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+
+  logoutText: {
+    color: COLORS.textLight,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+});

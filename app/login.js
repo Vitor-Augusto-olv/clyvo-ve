@@ -5,7 +5,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  ScrollView
+  ScrollView,
+  StatusBar
 } from 'react-native';
 
 import { useState } from 'react';
@@ -13,6 +14,13 @@ import { useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { router } from 'expo-router';
+
+import COLORS from '../constants/colors';
+
+import {
+  MaterialIcons,
+  Ionicons
+} from '@expo/vector-icons';
 
 export default function Login() {
 
@@ -25,9 +33,12 @@ export default function Login() {
 
     if (!nome || !telefone || !email || !senha) {
 
-      Alert.alert('Erro', 'Preencha todos os campos');
-      return;
+      Alert.alert(
+        'Campos obrigatórios',
+        'Preencha todos os campos.'
+      );
 
+      return;
     }
 
     try {
@@ -54,55 +65,153 @@ export default function Login() {
 
     } catch (e) {
 
-      Alert.alert('Erro', 'Não foi possível cadastrar');
+      Alert.alert(
+        'Erro',
+        'Não foi possível realizar o cadastro.'
+      );
 
     }
   };
 
   return (
 
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
 
-      <Text style={styles.titulo}>🐾 Cadastro</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Nome"
-        value={nome}
-        onChangeText={setNome}
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={COLORS.primary}
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Telefone"
-        keyboardType="phone-pad"
-        value={telefone}
-        onChangeText={setTelefone}
-      />
+      <View style={styles.topSection}>
 
-      <TextInput
-        style={styles.input}
-        placeholder="E-mail"
-        value={email}
-        onChangeText={setEmail}
-      />
+        <View style={styles.logoCircle}>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Senha"
-        secureTextEntry
-        value={senha}
-        onChangeText={setSenha}
-      />
+          <Ionicons
+            name="paw"
+            size={40}
+            color={COLORS.white}
+          />
 
-      <TouchableOpacity
-        style={styles.botao}
-        onPress={cadastrar}
-      >
-        <Text style={styles.botaoTexto}>Cadastrar</Text>
-      </TouchableOpacity>
+        </View>
+
+        <Text style={styles.title}>
+          Clyvo Vet
+        </Text>
+
+        <Text style={styles.subtitle}>
+          Plataforma inteligente para o cuidado do seu pet
+        </Text>
+
+      </View>
+
+      <View style={styles.card}>
+
+        <Text style={styles.cardTitle}>
+          Criar conta
+        </Text>
+
+        {/* NOME */}
+
+        <View style={styles.inputContainer}>
+
+          <MaterialIcons
+            name="person"
+            size={22}
+            color={COLORS.accent}
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Nome completo"
+            placeholderTextColor={COLORS.subtext}
+            value={nome}
+            onChangeText={setNome}
+          />
+
+        </View>
+
+        {/* TELEFONE */}
+
+        <View style={styles.inputContainer}>
+
+          <MaterialIcons
+            name="phone"
+            size={22}
+            color={COLORS.accent}
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Telefone"
+            placeholderTextColor={COLORS.subtext}
+            keyboardType="phone-pad"
+            value={telefone}
+            onChangeText={setTelefone}
+          />
+
+        </View>
+
+        {/* EMAIL */}
+
+        <View style={styles.inputContainer}>
+
+          <MaterialIcons
+            name="email"
+            size={22}
+            color={COLORS.accent}
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="E-mail"
+            placeholderTextColor={COLORS.subtext}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+          />
+
+        </View>
+
+        {/* SENHA */}
+
+        <View style={styles.inputContainer}>
+
+          <MaterialIcons
+            name="lock"
+            size={22}
+            color={COLORS.accent}
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Senha"
+            placeholderTextColor={COLORS.subtext}
+            secureTextEntry
+            value={senha}
+            onChangeText={setSenha}
+          />
+
+        </View>
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={cadastrar}
+        >
+
+          <Text style={styles.buttonText}>
+            Entrar no App
+          </Text>
+
+        </TouchableOpacity>
+
+      </View>
 
     </ScrollView>
+
   );
 }
 
@@ -110,38 +219,115 @@ const styles = StyleSheet.create({
 
   container: {
     flexGrow: 1,
-    justifyContent: 'center',
-    padding: 25,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.background,
   },
 
-  titulo: {
-    fontSize: 32,
+  topSection: {
+    backgroundColor: COLORS.primary,
+    paddingTop: 70,
+    paddingBottom: 50,
+    paddingHorizontal: 25,
+
+    borderBottomLeftRadius: 35,
+    borderBottomRightRadius: 35,
+  },
+
+  logoCircle: {
+    width: 80,
+    height: 80,
+
+    borderRadius: 40,
+
+    backgroundColor: COLORS.accent,
+
+    justifyContent: 'center',
+    alignItems: 'center',
+
+    marginBottom: 20,
+  },
+
+  title: {
+    fontSize: 34,
     fontWeight: 'bold',
-    color: '#1a3c5e',
-    marginBottom: 30,
-    textAlign: 'center',
+    color: COLORS.white,
+  },
+
+  subtitle: {
+    fontSize: 15,
+    color: '#C4D3E1',
+    marginTop: 8,
+    lineHeight: 22,
+  },
+
+  card: {
+    backgroundColor: COLORS.card,
+
+    marginHorizontal: 20,
+    marginTop: -30,
+
+    borderRadius: 28,
+
+    padding: 22,
+
+    shadowColor: '#000',
+
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+
+    elevation: 5,
+  },
+
+  cardTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 25,
+  },
+
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+
+    backgroundColor: '#fff',
+
+    borderWidth: 1,
+    borderColor: COLORS.border,
+
+    borderRadius: 18,
+
+    paddingHorizontal: 15,
+    marginBottom: 16,
   },
 
   input: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 15,
-    fontSize: 16,
+    flex: 1,
+    paddingVertical: 15,
+    paddingLeft: 12,
+
+    fontSize: 15,
+    color: COLORS.text,
   },
 
-  botao: {
-    backgroundColor: '#e8335a',
-    padding: 16,
-    borderRadius: 12,
+  button: {
+    backgroundColor: COLORS.accent,
+
+    padding: 18,
+
+    borderRadius: 18,
+
     alignItems: 'center',
+
     marginTop: 10,
   },
 
-  botaoTexto: {
-    color: '#fff',
-    fontSize: 17,
+  buttonText: {
+    color: COLORS.white,
+    fontSize: 16,
     fontWeight: 'bold',
   },
 

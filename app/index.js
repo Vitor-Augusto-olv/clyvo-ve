@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import COLORS from '../constants/colors';
 
 export default function Index() {
 
@@ -53,7 +54,7 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: '#1a3c5e',
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -72,7 +73,7 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    backgroundColor: '#e8335a',
+    backgroundColor: COLORS.accent,
     paddingVertical: 15,
     paddingHorizontal: 60,
     borderRadius: 30,

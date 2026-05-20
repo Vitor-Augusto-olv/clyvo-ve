@@ -1,62 +1,179 @@
 import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+
+import {
+  Ionicons,
+  MaterialIcons,
+  FontAwesome5
+} from '@expo/vector-icons';
+
+import COLORS from '../../constants/colors';
 
 export default function TabsLayout() {
+
   return (
+
     <Tabs
+
       screenOptions={{
-        tabBarActiveTintColor: '#e8335a',
-        tabBarInactiveTintColor: '#888',
-        tabBarStyle: { backgroundColor: '#fff' },
-        headerStyle: { backgroundColor: '#1a3c5e' },
-        headerTintColor: '#fff',
+
+        headerShown: false,
+
+        tabBarActiveTintColor: COLORS.accent,
+
+        tabBarInactiveTintColor: '#94A3B8',
+
+        tabBarStyle: {
+
+          position: 'absolute',
+
+          bottom: 15,
+          left: 15,
+          right: 15,
+
+          height: 75,
+
+          backgroundColor: COLORS.white,
+
+          borderRadius: 25,
+
+          borderTopWidth: 0,
+
+          paddingTop: 10,
+          paddingBottom: 10,
+
+          shadowColor: '#000',
+
+          shadowOffset: {
+            width: 0,
+            height: 4,
+          },
+
+          shadowOpacity: 0.08,
+          shadowRadius: 10,
+
+          elevation: 10,
+        },
+
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+          marginBottom: 5,
+        },
+
       }}
     >
+
+      {/* HOME */}
+
       <Tabs.Screen
         name="home"
+
         options={{
+
           title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" color={color} size={size} />
+
+          tabBarIcon: ({ color, focused }) => (
+
+            <Ionicons
+              name={focused ? 'home' : 'home-outline'}
+              color={color}
+              size={24}
+            />
+
           ),
         }}
       />
+
+      {/* PETS */}
+
       <Tabs.Screen
         name="pets"
+
         options={{
-          title: 'Meus Pets',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="paw" color={color} size={size} />
+
+          title: 'Pets',
+
+          tabBarIcon: ({ color, focused }) => (
+
+            <FontAwesome5
+              name="paw"
+              color={color}
+              size={20}
+              solid={focused}
+            />
+
           ),
         }}
       />
+
+      {/* CADASTRAR */}
+
       <Tabs.Screen
         name="cadastrar"
+
         options={{
+
           title: 'Cadastrar',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="add-circle" color={color} size={size} />
+
+          tabBarIcon: ({ focused }) => (
+
+            <Ionicons
+              name="add-circle"
+              color={focused
+                ? COLORS.accent
+                : '#94A3B8'}
+              size={34}
+            />
+
           ),
         }}
       />
+
+      {/* SAÚDE */}
+
       <Tabs.Screen
         name="saude"
+
         options={{
+
           title: 'Saúde',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="medical" color={color} size={size} />
+
+          tabBarIcon: ({ color, focused }) => (
+
+            <MaterialIcons
+              name="medical-services"
+              color={color}
+              size={24}
+            />
+
           ),
         }}
       />
+
+      {/* PERFIL */}
+
       <Tabs.Screen
         name="perfil"
+
         options={{
+
           title: 'Perfil',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" color={color} size={size} />
+
+          tabBarIcon: ({ color, focused }) => (
+
+            <Ionicons
+              name={focused
+                ? 'person'
+                : 'person-outline'}
+              color={color}
+              size={24}
+            />
+
           ),
         }}
       />
+
     </Tabs>
+
   );
 }
