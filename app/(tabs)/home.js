@@ -246,14 +246,6 @@ export default function Home() {
         </TouchableOpacity>
       </View>
 
-      {/* BOTÃO CADASTRAR */}
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => router.push('/cadastrar')}
-      >
-        <Text style={styles.buttonText}>+ Cadastrar novo pet</Text>
-      </TouchableOpacity>
-
       <View style={{ height: 30 }} />
     </ScrollView>
   );
@@ -443,18 +435,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: COLORS.primary,
-  },
-  button: {
-    backgroundColor: COLORS.accent,
-    marginHorizontal: 16,
-    marginTop: 20,
-    padding: 18,
-    borderRadius: 18,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 });
