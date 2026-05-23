@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 
 import { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import COLORS from '../constants/colors';
 import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 
@@ -51,16 +52,40 @@ export default function Agendar() {
   const [diaSelecionado, setDiaSelecionado] = useState(null);
   const [horarioSelecionado, setHorarioSelecionado] = useState(null);
 
-  const confirmar = () => {
-    if (!clinicaSelecionada || !tipoSelecionado || !diaSelecionado || !horarioSelecionado) {
-      Alert.alert('Atenção', 'Selecione todos os campos antes de confirmar.');
-      return;
-    }
+  const confirmar = async () => {
+  if (!clinicaSelecionada || !tipoSelecionado || !diaSelecionado || !horarioSelecionado) {
+    Alert.alert('Atenção', 'Selecione todos os campos antes de confirmar.');
+    return;
+  }
+
+  try {
+    const novoAgendamento = {
+      id: Date.now(),
+      tipo: tipoSelecionado.nome,
+      clinica: clinicaSelecionada.nome,
+      data: diaSelecionado.data,
+      horario: horarioSelecionado,
+    };
+
+    const salvos = await AsyncStorage.getItem('@agendamentos');
+    const lista = salvos ? JSON.parse(salvos) : [];
+    lista.push(novoAgendamento);
+    await AsyncStorage.setItem('@agendamentos', JSON.stringify(lista));
+
     Alert.alert(
       '✅ Agendamento Confirmado!',
       `${tipoSelecionado.nome}\n${clinicaSelecionada.nome}\n${diaSelecionado.data} às ${horarioSelecionado}`
     );
-  };
+
+    setClinicaSelecionada(null);
+    setTipoSelecionado(null);
+    setDiaSelecionado(null);
+    setHorarioSelecionado(null);
+
+  } catch (e) {
+    Alert.alert('Erro', 'Não foi possível salvar o agendamento.');
+  }
+};
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
