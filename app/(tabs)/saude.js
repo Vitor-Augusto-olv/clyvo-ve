@@ -6,7 +6,9 @@ import {
   TouchableOpacity,
 } from 'react-native';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import COLORS from '../../constants/colors';
 import { Ionicons, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 
@@ -40,24 +42,15 @@ const vacinas = [
   },
 ];
 
-const consultas = [
+const consultasFixas = [
   {
-    id: 1,
+    id: 'fixo-1',
     tipo: 'Check-up Geral',
     data: '10/04/2026',
-    veterinario: 'Dr. Carlos Mendes',
+    horario: '14:30',
     clinica: 'ClyvoVet Unidade Centro',
     observacao: 'Animal saudável, peso ideal de 12,4 kg.',
     status: 'ok',
-  },
-  {
-    id: 2,
-    tipo: 'Retorno — Dermatologia',
-    data: '28/06/2026',
-    veterinario: 'Dra. Fernanda Lima',
-    clinica: 'ClyvoVet Unidade Centro',
-    observacao: 'Acompanhamento de dermatite atópica.',
-    status: 'agendado',
   },
 ];
 
@@ -82,11 +75,11 @@ const medicamentos = [
 
 function StatusBadge({ status }) {
   const config = {
-    ok: { color: '#22C55E', bg: '#F0FDF4', label: 'Em dia' },
+    ok: { color: '#22C55E', bg: '#F0FDF4', label: 'Realizada' },
     alerta: { color: '#F59E0B', bg: '#FFFBEB', label: 'Atenção' },
     agendado: { color: '#3B82F6', bg: '#EFF6FF', label: 'Agendado' },
   };
-  const c = config[status] || config.ok;
+  const c = config[status] || config.agendado;
   return (
     <View style={[styles.badge, { backgroundColor: c.bg }]}>
       <View style={[styles.badgeDot, { backgroundColor: c.color }]} />
@@ -97,6 +90,34 @@ function StatusBadge({ status }) {
 
 export default function Saude() {
   const [abaAtiva, setAbaAtiva] = useState('vacinas');
+  const [consultas, setConsultas] = useState(consultasFixas);
+
+  useFocusEffect(
+    useCallback(() => {
+      carregarConsultas();
+    }, [])
+  );
+
+  const carregarConsultas = async () => {
+    try {
+      const salvos = await AsyncStorage.getItem('@agendamentos');
+      const agendamentos = salvos ? JSON.parse(salvos) : [];
+
+      const agendamentosFormatados = agendamentos.map((a) => ({
+        id: a.id,
+        tipo: a.tipo,
+        data: a.data,
+        horario: a.horario,
+        clinica: a.clinica,
+        observacao: '—',
+        status: 'agendado',
+      }));
+
+      setConsultas([...consultasFixas, ...agendamentosFormatados]);
+    } catch (e) {
+      console.log('Erro ao carregar consultas', e);
+    }
+  };
 
   const abas = [
     { key: 'vacinas', label: 'Vacinas', icon: 'medkit' },
@@ -121,17 +142,17 @@ export default function Saude() {
 
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>3</Text>
+            <Text style={styles.statNumber}>{vacinas.length}</Text>
             <Text style={styles.statLabel}>Vacinas</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>2</Text>
+            <Text style={styles.statNumber}>{consultas.length}</Text>
             <Text style={styles.statLabel}>Consultas</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>2</Text>
+            <Text style={styles.statNumber}>{medicamentos.length}</Text>
             <Text style={styles.statLabel}>Remédios</Text>
           </View>
         </View>
@@ -203,42 +224,53 @@ export default function Saude() {
       {/* CONSULTAS */}
       {abaAtiva === 'consultas' && (
         <View style={styles.section}>
-          {consultas.map((c) => (
-            <View key={c.id} style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardIconBox}>
-                  <MaterialIcons name="local-hospital" size={18} color={COLORS.accent} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cardTitle}>{c.tipo}</Text>
-                </View>
-                <StatusBadge status={c.status} />
-              </View>
-
-              <View style={styles.cardDivider} />
-
-              <View style={styles.infoRow}>
-                <View style={styles.infoCol}>
-                  <Text style={styles.infoLabel}>Data</Text>
-                  <Text style={styles.infoValue}>{c.data}</Text>
-                </View>
-                <View style={styles.infoCol}>
-                  <Text style={styles.infoLabel}>Veterinário</Text>
-                  <Text style={styles.infoValue}>{c.veterinario}</Text>
-                </View>
-              </View>
-
-              <View style={styles.infoFull}>
-                <Text style={styles.infoLabel}>Clínica</Text>
-                <Text style={styles.infoValue}>{c.clinica}</Text>
-              </View>
-
-              <View style={styles.observacaoBox}>
-                <Ionicons name="document-text-outline" size={14} color={COLORS.textLight} />
-                <Text style={styles.observacaoText}>{c.observacao}</Text>
-              </View>
+          {consultas.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <MaterialIcons name="event-busy" size={50} color={COLORS.textLight} />
+              <Text style={styles.emptyText}>Nenhuma consulta registrada</Text>
             </View>
-          ))}
+          ) : (
+            consultas.map((c) => (
+              <View key={c.id} style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.cardIconBox}>
+                    <MaterialIcons name="local-hospital" size={18} color={COLORS.accent} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardTitle}>{c.tipo}</Text>
+                  </View>
+                  <StatusBadge status={c.status} />
+                </View>
+
+                <View style={styles.cardDivider} />
+
+                <View style={styles.infoRow}>
+                  <View style={styles.infoCol}>
+                    <Text style={styles.infoLabel}>Data</Text>
+                    <Text style={styles.infoValue}>{c.data}</Text>
+                  </View>
+                  {c.horario && (
+                    <View style={styles.infoCol}>
+                      <Text style={styles.infoLabel}>Horário</Text>
+                      <Text style={styles.infoValue}>{c.horario}</Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.infoFull}>
+                  <Text style={styles.infoLabel}>Clínica</Text>
+                  <Text style={styles.infoValue}>{c.clinica}</Text>
+                </View>
+
+                {c.observacao && c.observacao !== '—' && (
+                  <View style={styles.observacaoBox}>
+                    <Ionicons name="document-text-outline" size={14} color={COLORS.textLight} />
+                    <Text style={styles.observacaoText}>{c.observacao}</Text>
+                  </View>
+                )}
+              </View>
+            ))
+          )}
         </View>
       )}
 
@@ -469,5 +501,16 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 12,
     fontWeight: '700',
+  },
+  emptyContainer: {
+    marginTop: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 30,
+  },
+  emptyText: {
+    marginTop: 12,
+    fontSize: 15,
+    color: COLORS.textLight,
   },
 });
