@@ -6,6 +6,9 @@ const COLORS = {
 
   background: '#F4F7FB',
   white: '#FFFFFF',
+  card: '#FFFFFF',
+  border: '#E2E8F0',
+  subtext: '#94A3B8',
 
   text: '#1A1A1A',
   textLight: '#6B7280',

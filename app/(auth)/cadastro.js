@@ -9,52 +9,61 @@ import {
   StatusBar,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 
 import { useState } from 'react';
+import { Link, useRouter } from 'expo-router';
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../../context/AuthContext';
+import COLORS from '../../constants/colors';
 
-import { router } from 'expo-router';
-
-import COLORS from '../constants/colors';
-
-import {
-  MaterialIcons,
-  Ionicons,
-} from '@expo/vector-icons';
-
-export default function Login() {
+export default function Cadastro() {
+  const { signUp } = useAuth();
+  const router = useRouter();
 
   const [nome, setNome] = useState('');
-  const [telefone, setTelefone] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const cadastrar = async () => {
-
-    if (!nome || !telefone || !email || !senha) {
+  const handleCadastrar = async () => {
+    if (!nome || !email || !senha || !confirmarSenha) {
       Alert.alert('Campos obrigatórios', 'Preencha todos os campos.');
       return;
     }
 
+    if (senha.length < 6) {
+      Alert.alert('Senha muito curta', 'A senha precisa ter pelo menos 6 caracteres.');
+      return;
+    }
+
+    if (senha !== confirmarSenha) {
+      Alert.alert('Senhas diferentes', 'A confirmação de senha não bate com a senha.');
+      return;
+    }
+
+    setLoading(true);
     try {
+      const data = await signUp(email.trim(), senha, nome.trim());
 
-      const usuario = {
-        nome,
-        telefone,
-        email,
-        senha,
-        logado: true,
-      };
+      // Se o projeto exigir confirmação de e-mail, ainda não haverá sessão aqui
+      if (!data.session) {
+        Alert.alert(
+          'Confirme seu e-mail',
+          'Enviamos um link de confirmação para o seu e-mail. Confirme antes de entrar.'
+        );
+        router.replace('/(auth)/login');
+        return;
+      }
 
-      await AsyncStorage.setItem('@usuarioLogado', JSON.stringify(usuario));
-      await AsyncStorage.setItem('@perfil', JSON.stringify(usuario));
-
-      router.replace('/home');
-
-    } catch (e) {
-      Alert.alert('Erro', 'Não foi possível realizar o cadastro.');
+      router.replace('/(tabs)/home');
+    } catch (error) {
+      Alert.alert('Erro ao cadastrar', traduzErro(error?.message) || 'Tente novamente.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -68,7 +77,6 @@ export default function Login() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-
         <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
 
         <View style={styles.topSection}>
@@ -76,13 +84,10 @@ export default function Login() {
             <Ionicons name="paw" size={40} color={COLORS.white} />
           </View>
           <Text style={styles.title}>Clyvo Vet</Text>
-          <Text style={styles.subtitle}>
-            Plataforma inteligente para o cuidado do seu pet
-          </Text>
+          <Text style={styles.subtitle}>Crie sua conta para começar</Text>
         </View>
 
         <View style={styles.card}>
-
           <Text style={styles.cardTitle}>Criar conta</Text>
 
           <View style={styles.inputContainer}>
@@ -93,19 +98,6 @@ export default function Login() {
               placeholderTextColor={COLORS.subtext}
               value={nome}
               onChangeText={setNome}
-              returnKeyType="next"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <MaterialIcons name="phone" size={22} color={COLORS.accent} />
-            <TextInput
-              style={styles.input}
-              placeholder="Telefone"
-              placeholderTextColor={COLORS.subtext}
-              keyboardType="phone-pad"
-              value={telefone}
-              onChangeText={setTelefone}
               returnKeyType="next"
             />
           </View>
@@ -128,25 +120,65 @@ export default function Login() {
             <MaterialIcons name="lock" size={22} color={COLORS.accent} />
             <TextInput
               style={styles.input}
-              placeholder="Senha"
+              placeholder="Senha (mín. 6 caracteres)"
               placeholderTextColor={COLORS.subtext}
               secureTextEntry
               value={senha}
               onChangeText={setSenha}
-              returnKeyType="done"
+              returnKeyType="next"
             />
           </View>
 
-          <TouchableOpacity style={styles.button} onPress={cadastrar}>
-            <Text style={styles.buttonText}>Entrar no App</Text>
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="lock-outline" size={22} color={COLORS.accent} />
+            <TextInput
+              style={styles.input}
+              placeholder="Confirmar senha"
+              placeholderTextColor={COLORS.subtext}
+              secureTextEntry
+              value={confirmarSenha}
+              onChangeText={setConfirmarSenha}
+              returnKeyType="done"
+              onSubmitEditing={handleCadastrar}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleCadastrar}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color={COLORS.white} />
+            ) : (
+              <Text style={styles.buttonText}>Criar conta</Text>
+            )}
           </TouchableOpacity>
 
+          <Link href="/(auth)/login" asChild>
+            <TouchableOpacity style={styles.linkButton}>
+              <Text style={styles.linkText}>
+                Já tem conta? <Text style={styles.linkBold}>Entrar</Text>
+              </Text>
+            </TouchableOpacity>
+          </Link>
         </View>
 
         <View style={{ height: 40 }} />
       </ScrollView>
     </KeyboardAvoidingView>
   );
+}
+
+function traduzErro(mensagem) {
+  if (!mensagem) return null;
+  if (mensagem.includes('already registered') || mensagem.includes('already exists')) {
+    return 'Já existe uma conta com esse e-mail.';
+  }
+  if (mensagem.includes('Password should be')) {
+    return 'A senha não atende aos requisitos mínimos de segurança.';
+  }
+  return mensagem;
 }
 
 const styles = StyleSheet.create({
@@ -224,9 +256,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
   },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
   buttonText: {
     color: COLORS.white,
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  linkButton: {
+    marginTop: 18,
+    alignItems: 'center',
+  },
+  linkText: {
+    color: COLORS.textLight,
+    fontSize: 14,
+  },
+  linkBold: {
+    color: COLORS.accent,
     fontWeight: 'bold',
   },
 });

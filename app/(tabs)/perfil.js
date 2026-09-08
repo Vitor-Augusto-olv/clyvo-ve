@@ -14,9 +14,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { router } from 'expo-router';
 
+import { useAuth } from '../../context/AuthContext';
 import COLORS from '../../constants/colors';
 
 export default function Perfil() {
+
+  const { user, signOut } = useAuth();
 
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
@@ -24,7 +27,6 @@ export default function Perfil() {
 
   useEffect(() => {
 
-    verificarLogin();
     carregarPerfil();
 
   }, []);
@@ -33,16 +35,15 @@ export default function Perfil() {
 
     try {
 
-      const dados = await AsyncStorage.getItem('@perfil');
+      // Nome e e-mail vêm da conta autenticada no Supabase (fonte da verdade)
+      setNome(user?.user_metadata?.nome ?? '');
+      setEmail(user?.email ?? '');
+
+      // Telefone é um dado complementar, ainda local por simplicidade
+      const dados = await AsyncStorage.getItem('@perfil_telefone');
 
       if (dados) {
-
-        const perfil = JSON.parse(dados);
-
-        setNome(perfil.nome);
-        setEmail(perfil.email);
-        setTelefone(perfil.telefone);
-
+        setTelefone(JSON.parse(dados).telefone);
       }
 
     } catch (e) {
@@ -55,11 +56,11 @@ export default function Perfil() {
 
   const salvarPerfil = async () => {
 
-    if (!nome || !email || !telefone) {
+    if (!telefone) {
 
       Alert.alert(
         'Atenção',
-        'Preencha todos os campos!'
+        'Preencha o telefone!'
       );
 
       return;
@@ -68,15 +69,9 @@ export default function Perfil() {
 
     try {
 
-      const perfil = {
-        nome,
-        email,
-        telefone
-      };
-
       await AsyncStorage.setItem(
-        '@perfil',
-        JSON.stringify(perfil)
+        '@perfil_telefone',
+        JSON.stringify({ telefone })
       );
 
       Alert.alert(
@@ -97,20 +92,11 @@ export default function Perfil() {
 
   const logout = async () => {
 
-    await AsyncStorage.removeItem('@usuarioLogado');
-
-    router.replace('/login');
-
-  };
-
-  const verificarLogin = async () => {
-
-    const usuario = await AsyncStorage.getItem('@usuarioLogado');
-
-    if (!usuario) {
-
-      router.replace('/login');
-
+    try {
+      await signOut();
+      router.replace('/(auth)/login');
+    } catch (e) {
+      Alert.alert('Erro', 'Não foi possível sair da conta.');
     }
 
   };
@@ -152,11 +138,11 @@ export default function Perfil() {
           </Text>
 
           <TextInput
-            style={styles.input}
-            placeholder="Digite seu nome"
+            style={[styles.input, styles.inputDisabled]}
+            placeholder="Nome não informado"
             placeholderTextColor={COLORS.subtext}
             value={nome}
-            onChangeText={setNome}
+            editable={false}
           />
 
           <Text style={styles.label}>
@@ -164,11 +150,11 @@ export default function Perfil() {
           </Text>
 
           <TextInput
-            style={styles.input}
-            placeholder="Digite seu e-mail"
+            style={[styles.input, styles.inputDisabled]}
+            placeholder="E-mail não informado"
             placeholderTextColor={COLORS.subtext}
             value={email}
-            onChangeText={setEmail}
+            editable={false}
             keyboardType="email-address"
           />
 
@@ -325,6 +311,11 @@ const styles = StyleSheet.create({
     color: COLORS.text,
 
     marginBottom: 5,
+  },
+
+  inputDisabled: {
+    backgroundColor: '#F0F2F5',
+    color: COLORS.textLight,
   },
 
   saveButton: {

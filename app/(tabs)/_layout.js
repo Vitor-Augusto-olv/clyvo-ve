@@ -1,4 +1,5 @@
-import { Tabs } from 'expo-router';
+import { View, ActivityIndicator } from 'react-native';
+import { Tabs, Redirect } from 'expo-router';
 
 import {
   Ionicons,
@@ -6,9 +7,25 @@ import {
   FontAwesome5
 } from '@expo/vector-icons';
 
+import { useAuth } from '../../context/AuthContext';
 import COLORS from '../../constants/colors';
 
 export default function TabsLayout() {
+  const { session, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.primary }}>
+        <ActivityIndicator size="large" color={COLORS.white} />
+      </View>
+    );
+  }
+
+  // Guarda de rota: usuário não autenticado não acessa nenhuma tela interna,
+  // nem por navegação direta/deep link.
+  if (!session) {
+    return <Redirect href="/(auth)/login" />;
+  }
 
   return (
 
