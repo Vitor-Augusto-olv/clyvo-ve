@@ -8,13 +8,13 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 
 import { useState } from 'react';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import COLORS from '../../constants/colors';
+import { useCreatePet } from '../../hooks/usePets';
 
 import {
   MaterialIcons,
@@ -29,42 +29,38 @@ export default function Cadastrar() {
   const [raca, setRaca] = useState('');
   const [idade, setIdade] = useState('');
 
-  const handleSalvar = async () => {
+  const { mutate: criarPet, isPending } = useCreatePet();
+
+  const handleSalvar = () => {
 
     if (!nome || !especie || !raca || !idade) {
       Alert.alert('Campos obrigatórios', 'Preencha todos os campos.');
       return;
     }
 
-    try {
+    const idadeNumero = parseInt(idade, 10);
 
-      const novoPet = {
-        id: Date.now(),
-        nome,
-        especie,
-        raca,
-        idade,
-        alerta: 'Check-up recomendado em 30 dias.',
-        score: '85%',
-        status: 'Saudável',
-      };
-
-      const petsSalvos = await AsyncStorage.getItem('pets');
-      const listaPets = petsSalvos ? JSON.parse(petsSalvos) : [];
-      listaPets.push(novoPet);
-      await AsyncStorage.setItem('pets', JSON.stringify(listaPets));
-
-      Alert.alert('Sucesso', `${nome} foi cadastrado com sucesso!`);
-
-      setNome('');
-      setEspecie('');
-      setRaca('');
-      setIdade('');
-
-    } catch (error) {
-      console.log(error);
-      Alert.alert('Erro', 'Não foi possível salvar o pet.');
+    if (isNaN(idadeNumero) || idadeNumero < 0) {
+      Alert.alert('Idade inválida', 'Informe a idade em número de anos (ex: 3).');
+      return;
     }
+
+    criarPet(
+      { nome, especie, raca, idade: idadeNumero },
+      {
+        onSuccess: () => {
+          Alert.alert('Sucesso', `${nome} foi cadastrado com sucesso!`);
+          setNome('');
+          setEspecie('');
+          setRaca('');
+          setIdade('');
+        },
+        onError: (error) => {
+          console.log(error);
+          Alert.alert('Erro', 'Não foi possível salvar o pet. Tente novamente.');
+        },
+      }
+    );
   };
 
   return (
@@ -104,6 +100,7 @@ export default function Cadastrar() {
               value={nome}
               onChangeText={setNome}
               returnKeyType="next"
+              editable={!isPending}
             />
           </View>
 
@@ -117,6 +114,7 @@ export default function Cadastrar() {
               value={especie}
               onChangeText={setEspecie}
               returnKeyType="next"
+              editable={!isPending}
             />
           </View>
 
@@ -130,19 +128,22 @@ export default function Cadastrar() {
               value={raca}
               onChangeText={setRaca}
               returnKeyType="next"
+              editable={!isPending}
             />
           </View>
 
-          <Text style={styles.label}>Idade</Text>
+          <Text style={styles.label}>Idade (anos)</Text>
           <View style={styles.inputContainer}>
             <MaterialIcons name="cake" size={22} color={COLORS.accent} />
             <TextInput
               style={styles.input}
-              placeholder="Ex: 3 anos"
+              placeholder="Ex: 3"
               placeholderTextColor={COLORS.subtext}
               value={idade}
               onChangeText={setIdade}
+              keyboardType="numeric"
               returnKeyType="done"
+              editable={!isPending}
             />
           </View>
 
@@ -153,8 +154,16 @@ export default function Cadastrar() {
             </Text>
           </View>
 
-          <TouchableOpacity style={styles.button} onPress={handleSalvar}>
-            <Text style={styles.buttonText}>Salvar Pet</Text>
+          <TouchableOpacity
+            style={[styles.button, isPending && styles.buttonDisabled]}
+            onPress={handleSalvar}
+            disabled={isPending}
+          >
+            {isPending ? (
+              <ActivityIndicator color={COLORS.white} />
+            ) : (
+              <Text style={styles.buttonText}>Salvar Pet</Text>
+            )}
           </TouchableOpacity>
 
         </View>
@@ -258,6 +267,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     marginTop: 25,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   buttonText: {
     color: COLORS.white,

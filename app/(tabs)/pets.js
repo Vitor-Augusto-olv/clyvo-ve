@@ -4,15 +4,17 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  TextInput,
   Alert,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 
-import { useState, useCallback } from 'react';
-import { useFocusEffect } from 'expo-router';
-
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useState } from 'react';
+import { router } from 'expo-router';
 
 import COLORS from '../../constants/colors';
+import { usePets, useUpdatePet, useDeletePet } from '../../hooks/usePets';
 
 import {
   FontAwesome5,
@@ -22,50 +24,104 @@ import {
 
 export default function Pets() {
 
-  const [pets, setPets] = useState([]);
+  const { data: pets, isLoading, isRefetching, refetch, isError } = usePets();
+  const { mutate: atualizarPet, isPending: salvando } = useUpdatePet();
+  const { mutate: removerPet, isPending: removendo } = useDeletePet();
+
   const [petSelecionado, setPetSelecionado] = useState(null);
+  const [editando, setEditando] = useState(false);
+  const [form, setForm] = useState({ nome: '', especie: '', raca: '', idade: '' });
 
-  useFocusEffect(
-    useCallback(() => {
-      carregarPets();
-    }, [])
-  );
-
-  const carregarPets = async () => {
-    try {
-      const petsSalvos = await AsyncStorage.getItem('pets');
-      if (petsSalvos) {
-        setPets(JSON.parse(petsSalvos));
-      } else {
-        setPets([]);
-      }
-    } catch (error) {
-      console.log(error);
-    }
+  const selecionarPet = (pet) => {
+    setPetSelecionado(pet);
+    setEditando(false);
+    setForm({
+      nome: pet.nome,
+      especie: pet.especie,
+      raca: pet.raca,
+      idade: String(pet.idade),
+    });
   };
 
-  const removerPet = async (id) => {
-    try {
-      const novaLista = pets.filter((pet) => pet.id !== id);
-      setPets(novaLista);
-      await AsyncStorage.setItem('pets', JSON.stringify(novaLista));
-      setPetSelecionado(null);
-      Alert.alert('Sucesso', 'Pet removido com sucesso!');
-    } catch (error) {
-      console.log(error);
-      Alert.alert('Erro', 'Não foi possível remover o pet.');
+  const iniciarEdicao = () => setEditando(true);
+
+  const salvarEdicao = () => {
+    const idadeNumero = parseInt(form.idade, 10);
+    if (!form.nome || !form.especie || !form.raca || isNaN(idadeNumero)) {
+      Alert.alert('Campos inválidos', 'Preencha todos os campos corretamente.');
+      return;
     }
+
+    atualizarPet(
+      {
+        id: petSelecionado.id,
+        nome: form.nome,
+        especie: form.especie,
+        raca: form.raca,
+        idade: idadeNumero,
+        status: petSelecionado.status,
+      },
+      {
+        onSuccess: (petAtualizado) => {
+          setPetSelecionado(petAtualizado);
+          setEditando(false);
+          Alert.alert('Sucesso', 'Dados do pet atualizados!');
+        },
+        onError: () => Alert.alert('Erro', 'Não foi possível atualizar o pet.'),
+      }
+    );
+  };
+
+  const confirmarRemocao = (pet) => {
+    Alert.alert(
+      'Remover pet',
+      `Tem certeza que deseja remover ${pet.nome}? Essa ação não pode ser desfeita.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Remover',
+          style: 'destructive',
+          onPress: () => {
+            removerPet(pet.id, {
+              onSuccess: () => {
+                setPetSelecionado(null);
+                Alert.alert('Sucesso', 'Pet removido com sucesso!');
+              },
+              onError: () => Alert.alert('Erro', 'Não foi possível remover o pet.'),
+            });
+          },
+        },
+      ]
+    );
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={COLORS.primary} />
+      }
+    >
 
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Meus Pets</Text>
         <Text style={styles.headerSubtitle}>Histórico inteligente dos animais</Text>
       </View>
 
-      {pets.length === 0 ? (
+      {isLoading ? (
+        <View style={styles.emptyContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+      ) : isError ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="cloud-offline-outline" size={60} color={COLORS.subtext} />
+          <Text style={styles.emptyText}>Não foi possível carregar seus pets</Text>
+          <TouchableOpacity onPress={refetch} style={{ marginTop: 12 }}>
+            <Text style={{ color: COLORS.accent, fontWeight: 'bold' }}>Tentar de novo</Text>
+          </TouchableOpacity>
+        </View>
+      ) : pets.length === 0 ? (
 
         <View style={styles.emptyContainer}>
           <Ionicons name="paw-outline" size={60} color={COLORS.subtext} />
@@ -79,7 +135,7 @@ export default function Pets() {
             key={pet.id}
             style={styles.card}
             activeOpacity={0.9}
-            onPress={() => setPetSelecionado(pet)}
+            onPress={() => selecionarPet(pet)}
           >
             <View style={styles.petTop}>
               <View style={styles.petIconBox}>
@@ -96,7 +152,7 @@ export default function Pets() {
                 <View style={styles.statusDot} />
                 <Text style={styles.statusText}>{pet.status}</Text>
               </View>
-              <Text style={styles.petAge}>{pet.idade}</Text>
+              <Text style={styles.petAge}>{pet.idade} {pet.idade === 1 ? 'ano' : 'anos'}</Text>
             </View>
           </TouchableOpacity>
         ))
@@ -111,44 +167,110 @@ export default function Pets() {
             <Text style={styles.detailsTitle}>Detalhes do Pet</Text>
           </View>
 
-          <Text style={styles.detailsText}>
-            <Text style={styles.bold}>Nome:</Text> {petSelecionado.nome}
-          </Text>
-          <Text style={styles.detailsText}>
-            <Text style={styles.bold}>Espécie:</Text> {petSelecionado.especie}
-          </Text>
-          <Text style={styles.detailsText}>
-            <Text style={styles.bold}>Raça:</Text> {petSelecionado.raca}
-          </Text>
-          <Text style={styles.detailsText}>
-            <Text style={styles.bold}>Idade:</Text> {petSelecionado.idade}
-          </Text>
-          <Text style={styles.detailsText}>
-            <Text style={styles.bold}>Status:</Text> {petSelecionado.status}
-          </Text>
+          {editando ? (
+            <>
+              <Text style={styles.inputLabel}>Nome</Text>
+              <TextInput
+                style={styles.editInput}
+                value={form.nome}
+                onChangeText={(v) => setForm((f) => ({ ...f, nome: v }))}
+              />
 
-          <View style={styles.alertBox}>
-            <View style={styles.alertHeader}>
-              <Ionicons name="warning" size={20} color="#C58B00" />
-              <Text style={styles.alertTitle}>Alerta Inteligente</Text>
-            </View>
-            <Text style={styles.alertText}>{petSelecionado.alerta}</Text>
-          </View>
+              <Text style={styles.inputLabel}>Espécie</Text>
+              <TextInput
+                style={styles.editInput}
+                value={form.especie}
+                onChangeText={(v) => setForm((f) => ({ ...f, especie: v }))}
+              />
 
-          <View style={styles.scoreBox}>
-            <Text style={styles.scoreTitle}>Score de Saúde</Text>
-            <Text style={styles.scoreValue}>{petSelecionado.score}</Text>
-          </View>
+              <Text style={styles.inputLabel}>Raça</Text>
+              <TextInput
+                style={styles.editInput}
+                value={form.raca}
+                onChangeText={(v) => setForm((f) => ({ ...f, raca: v }))}
+              />
 
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={() => removerPet(petSelecionado.id)}
-          >
-            <Text style={styles.deleteButtonText}>Remover Pet</Text>
-          </TouchableOpacity>
+              <Text style={styles.inputLabel}>Idade (anos)</Text>
+              <TextInput
+                style={styles.editInput}
+                value={form.idade}
+                onChangeText={(v) => setForm((f) => ({ ...f, idade: v }))}
+                keyboardType="numeric"
+              />
+
+              <View style={styles.editActionsRow}>
+                <TouchableOpacity
+                  style={[styles.smallButton, styles.cancelButton]}
+                  onPress={() => setEditando(false)}
+                  disabled={salvando}
+                >
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.smallButton, styles.saveButton]}
+                  onPress={salvarEdicao}
+                  disabled={salvando}
+                >
+                  {salvando ? (
+                    <ActivityIndicator color={COLORS.white} />
+                  ) : (
+                    <Text style={styles.saveButtonText}>Salvar</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <>
+              <Text style={styles.detailsText}>
+                <Text style={styles.bold}>Nome:</Text> {petSelecionado.nome}
+              </Text>
+              <Text style={styles.detailsText}>
+                <Text style={styles.bold}>Espécie:</Text> {petSelecionado.especie}
+              </Text>
+              <Text style={styles.detailsText}>
+                <Text style={styles.bold}>Raça:</Text> {petSelecionado.raca}
+              </Text>
+              <Text style={styles.detailsText}>
+                <Text style={styles.bold}>Idade:</Text> {petSelecionado.idade} anos
+              </Text>
+              <Text style={styles.detailsText}>
+                <Text style={styles.bold}>Status:</Text> {petSelecionado.status}
+              </Text>
+
+              <TouchableOpacity
+                style={styles.vacinasButton}
+                onPress={() => router.push(`/vacina/${petSelecionado.id}?nome=${petSelecionado.nome}`)}
+              >
+                <Ionicons name="medkit-outline" size={20} color={COLORS.primary} />
+                <Text style={styles.vacinasButtonText}>Gerenciar vacinas</Text>
+              </TouchableOpacity>
+
+              <View style={styles.editActionsRow}>
+                <TouchableOpacity
+                  style={[styles.smallButton, styles.editButton]}
+                  onPress={iniciarEdicao}
+                >
+                  <Text style={styles.editButtonText}>Editar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.smallButton, styles.deleteButton]}
+                  onPress={() => confirmarRemocao(petSelecionado)}
+                  disabled={removendo}
+                >
+                  {removendo ? (
+                    <ActivityIndicator color={COLORS.white} />
+                  ) : (
+                    <Text style={styles.deleteButtonText}>Remover</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
 
         </View>
       )}
+
+      <View style={{ height: 40 }} />
 
     </ScrollView>
   );
@@ -267,54 +389,77 @@ const styles = StyleSheet.create({
   bold: {
     fontWeight: 'bold',
   },
-  alertBox: {
-    backgroundColor: '#FFF4D9',
-    padding: 18,
-    borderRadius: 18,
-    marginTop: 20,
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginTop: 10,
+    marginBottom: 6,
   },
-  alertHeader: {
+  editInput: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: COLORS.text,
+  },
+  vacinasButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    backgroundColor: '#F4F7FB',
+    padding: 14,
+    borderRadius: 16,
+    marginTop: 10,
+    marginBottom: 4,
+    justifyContent: 'center',
   },
-  alertTitle: {
+  vacinasButtonText: {
+    color: COLORS.primary,
     fontWeight: 'bold',
-    color: '#A46B00',
     marginLeft: 8,
   },
-  alertText: {
-    color: '#6D5A2D',
-    lineHeight: 20,
-  },
-  scoreBox: {
-    backgroundColor: '#F4F7FB',
-    padding: 25,
-    borderRadius: 20,
+  editActionsRow: {
+    flexDirection: 'row',
     marginTop: 20,
+    gap: 12,
+  },
+  smallButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 16,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  scoreTitle: {
-    fontSize: 15,
-    color: COLORS.textLight,
-    marginBottom: 10,
+  editButton: {
+    backgroundColor: '#F4F7FB',
   },
-  scoreValue: {
-    fontSize: 42,
-    fontWeight: 'bold',
+  editButtonText: {
     color: COLORS.primary,
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    backgroundColor: '#F4F7FB',
+  },
+  cancelButtonText: {
+    color: COLORS.textLight,
+    fontWeight: 'bold',
+  },
+  saveButton: {
+    backgroundColor: COLORS.primary,
+  },
+  saveButtonText: {
+    color: COLORS.white,
+    fontWeight: 'bold',
   },
   deleteButton: {
     backgroundColor: COLORS.accent,
-    padding: 18,
-    borderRadius: 18,
-    alignItems: 'center',
-    marginTop: 24,
   },
   deleteButtonText: {
     color: COLORS.white,
     fontWeight: 'bold',
-    fontSize: 16,
   },
   emptyContainer: {
     marginTop: 90,
