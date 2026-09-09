@@ -56,6 +56,16 @@ export async function updatePet(id, { nome, especie, raca, idade, status }) {
 }
 
 export async function deletePet(id) {
-  const { error } = await supabase.from('pets').delete().eq('id', id);
+  const { data, error } = await supabase
+    .from('pets')
+    .delete()
+    .eq('id', id)
+    .select();
+
   if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error(
+      'Nenhum pet foi removido. Verifique se você é o dono deste registro (RLS).'
+    );
+  }
 }

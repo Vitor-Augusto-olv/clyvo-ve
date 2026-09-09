@@ -87,7 +87,10 @@ export default function Pets() {
                 setPetSelecionado(null);
                 Alert.alert('Sucesso', 'Pet removido com sucesso!');
               },
-              onError: () => Alert.alert('Erro', 'Não foi possível remover o pet.'),
+              onError: (error) => {
+                console.log(error);
+                Alert.alert('Erro', error?.message ?? 'Não foi possível remover o pet.');
+              },
             });
           },
         },

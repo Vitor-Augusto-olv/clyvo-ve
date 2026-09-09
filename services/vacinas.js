@@ -1,8 +1,6 @@
-// services/vacinas.js
-//
+
 // Camada de acesso a dados das vacinas. Cada vacina pertence a um pet
-// específico (pet_id), diferente da versão antiga que era uma lista
-// fixa igual pra todo mundo.
+// específico (pet_id)
 
 import { supabase } from '../lib/supabase';
 
@@ -71,8 +69,18 @@ export async function updateVacina(id, {
 }
 
 export async function deleteVacina(id) {
-  const { error } = await supabase.from('vacinas').delete().eq('id', id);
+  const { data, error } = await supabase
+    .from('vacinas')
+    .delete()
+    .eq('id', id)
+    .select();
+
   if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error(
+      'Nenhuma vacina foi removida. Verifique se você é o dono deste registro (RLS).'
+    );
+  }
 }
 
 // Calcula automaticamente se a vacina está "ok" ou em "alerta"

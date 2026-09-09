@@ -117,19 +117,32 @@ export default function VacinasDoPet() {
   };
 
   const confirmarRemocao = (vacina) => {
-    Alert.alert(
-      'Remover vacina',
-      `Remover o registro de "${vacina.nome}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Remover',
-          style: 'destructive',
-          onPress: () => removerVacina({ id: vacina.id, petId }),
+  Alert.alert(
+    'Remover vacina',
+    `Remover o registro de "${vacina.nome}"?`,
+    [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Remover',
+        style: 'destructive',
+        onPress: () => {
+          removerVacina(
+            { id: vacina.id, petId },
+            {
+              onSuccess: () => {
+                Alert.alert('Sucesso', 'Vacina removida com sucesso!');
+              },
+              onError: (error) => {
+                console.log(error);
+                Alert.alert('Erro', error?.message ?? 'Não foi possível remover a vacina.');
+              },
+            }
+          );
         },
-      ]
-    );
-  };
+      },
+    ]
+  );
+};
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
