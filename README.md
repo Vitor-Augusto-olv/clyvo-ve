@@ -80,7 +80,7 @@ Fluxo de dados: **Tela → hook (TanStack Query) → service (Supabase) → banc
 
 ## Vídeo de demonstração
 
-[Link do vídeo no YouTube](https://youtu.be/Vrukz6QIyog)
+[Link do vídeo no YouTube](https://youtu.be/BtLmnragaQ8)
 
 ## Integrantes
 
