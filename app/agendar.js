@@ -7,8 +7,11 @@ import {
   Alert,
 } from 'react-native';
 
-import { useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useState, useMemo } from 'react';
+import PetChips from '../components/PetChips';
+import { usePets } from '../hooks/usePets';
+import { useAgendamentos, useCreateAgendamento } from '../hooks/useAgendamentos';
+import { proximosDiasUteis } from '../utils/datas';
 import COLORS from '../constants/colors';
 import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 
@@ -38,54 +41,63 @@ const tiposConsulta = [
 
 const horariosDisponiveis = ['08:00', '09:30', '11:00', '14:00', '15:30', '17:00'];
 
-const diasDisponiveis = [
-  { data: '26/05', diaSemana: 'Seg' },
-  { data: '27/05', diaSemana: 'Ter' },
-  { data: '28/05', diaSemana: 'Qua' },
-  { data: '29/05', diaSemana: 'Qui' },
-  { data: '30/05', diaSemana: 'Sex' },
-];
-
 export default function Agendar() {
   const [clinicaSelecionada, setClinicaSelecionada] = useState(null);
   const [tipoSelecionado, setTipoSelecionado] = useState(null);
   const [diaSelecionado, setDiaSelecionado] = useState(null);
   const [horarioSelecionado, setHorarioSelecionado] = useState(null);
 
+  const { data: pets = [] } = usePets();
+  const { data: agendamentos = [] } = useAgendamentos();
+  const criarAgendamento = useCreateAgendamento();
+  const [petSelecionado, setPetSelecionado] = useState(null);
+  const petId = petSelecionado ?? pets[0]?.id;
+
+  // Dias reais: próximos 5 dias úteis a partir de amanhã
+  const diasDisponiveis = useMemo(() => proximosDiasUteis(5), []);
+
+  // Horários já ocupados na clínica/dia escolhidos não aparecem mais
+  const ocupados = agendamentos
+    .filter((ag) =>
+      ag.status === 'agendado' &&
+      ag.clinica === clinicaSelecionada?.nome &&
+      ag.data_consulta === diaSelecionado?.iso
+    )
+    .map((ag) => ag.horario);
+  const horariosLivres = horariosDisponiveis.filter((h) => !ocupados.includes(h));
+
   const confirmar = async () => {
-  if (!clinicaSelecionada || !tipoSelecionado || !diaSelecionado || !horarioSelecionado) {
-    Alert.alert('Atenção', 'Selecione todos os campos antes de confirmar.');
-    return;
-  }
+    if (!petId) {
+      Alert.alert('Atenção', 'Cadastre um pet antes de agendar.');
+      return;
+    }
+    if (!clinicaSelecionada || !tipoSelecionado || !diaSelecionado || !horarioSelecionado) {
+      Alert.alert('Atenção', 'Selecione todos os campos antes de confirmar.');
+      return;
+    }
 
-  try {
-    const novoAgendamento = {
-      id: Date.now(),
-      tipo: tipoSelecionado.nome,
-      clinica: clinicaSelecionada.nome,
-      data: diaSelecionado.data,
-      horario: horarioSelecionado,
-    };
+    try {
+      await criarAgendamento.mutateAsync({
+        petId,
+        tipo: tipoSelecionado.nome,
+        clinica: clinicaSelecionada.nome,
+        dataConsulta: diaSelecionado.iso,
+        horario: horarioSelecionado,
+      });
 
-    const salvos = await AsyncStorage.getItem('@agendamentos');
-    const lista = salvos ? JSON.parse(salvos) : [];
-    lista.push(novoAgendamento);
-    await AsyncStorage.setItem('@agendamentos', JSON.stringify(lista));
+      Alert.alert(
+        '✅ Agendamento Confirmado!',
+        `${tipoSelecionado.nome}\n${clinicaSelecionada.nome}\n${diaSelecionado.data} às ${horarioSelecionado}`
+      );
 
-    Alert.alert(
-      '✅ Agendamento Confirmado!',
-      `${tipoSelecionado.nome}\n${clinicaSelecionada.nome}\n${diaSelecionado.data} às ${horarioSelecionado}`
-    );
-
-    setClinicaSelecionada(null);
-    setTipoSelecionado(null);
-    setDiaSelecionado(null);
-    setHorarioSelecionado(null);
-
-  } catch (e) {
-    Alert.alert('Erro', 'Não foi possível salvar o agendamento.');
-  }
-};
+      setClinicaSelecionada(null);
+      setTipoSelecionado(null);
+      setDiaSelecionado(null);
+      setHorarioSelecionado(null);
+    } catch (e) {
+      Alert.alert('Erro', 'Não foi possível salvar o agendamento.');
+    }
+  };
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -104,6 +116,12 @@ export default function Agendar() {
       </View>
 
       <View style={styles.content}>
+
+        {/* PET */}
+        <Text style={styles.sectionTitle}>Pet</Text>
+        <View style={{ marginHorizontal: -20 }}>
+          <PetChips pets={pets} selectedId={petId} onSelect={setPetSelecionado} />
+        </View>
 
         {/* TIPO DE CONSULTA */}
         <Text style={styles.sectionTitle}>Tipo de Consulta</Text>
@@ -229,7 +247,7 @@ export default function Agendar() {
         {/* HORÁRIO */}
         <Text style={styles.sectionTitle}>Horário</Text>
         <View style={styles.horariosGrid}>
-          {horariosDisponiveis.map((h) => (
+          {horariosLivres.map((h) => (
             <TouchableOpacity
               key={h}
               style={[

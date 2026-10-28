@@ -3,73 +3,19 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 
 import COLORS from '../constants/colors';
+import { useState } from 'react';
+import PetChips from '../components/PetChips';
+import { usePets } from '../hooks/usePets';
+import { useVacinasByPet } from '../hooks/useVacinas';
+import { useAgendamentos } from '../hooks/useAgendamentos';
+import { useMedicamentos } from '../hooks/useMedicamentos';
+import { useEventos } from '../hooks/useEventos';
+import { formatarData } from '../utils/datas';
 import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
-
-const eventos = [
-  {
-    id: 1,
-    tipo: 'consulta',
-    titulo: 'Check-up Geral',
-    descricao: 'Animal saudável. Peso: 12,4 kg. Dentição em bom estado. Sem alterações.',
-    data: '10/04/2026',
-    hora: '14:30',
-    veterinario: 'Dr. Carlos Mendes',
-    clinica: 'ClyvoVet Unidade Centro',
-  },
-  {
-    id: 2,
-    tipo: 'vacina',
-    titulo: 'Vacina V10 aplicada',
-    descricao: 'Aplicação da vacina múltipla canina. Lote LT2026-04A. Sem reações adversas.',
-    data: '12/03/2026',
-    hora: '10:00',
-    veterinario: 'Dr. Carlos Mendes',
-    clinica: 'ClyvoVet Unidade Centro',
-  },
-  {
-    id: 3,
-    tipo: 'vacina',
-    titulo: 'Antirrábica aplicada',
-    descricao: 'Aplicação da vacina antirrábica. Lote LT2026-07B. Documento emitido.',
-    data: '12/03/2026',
-    hora: '10:15',
-    veterinario: 'Dr. Carlos Mendes',
-    clinica: 'ClyvoVet Unidade Centro',
-  },
-  {
-    id: 4,
-    tipo: 'medicamento',
-    titulo: 'Simparic administrado',
-    descricao: 'Antiparasitário mensal. Próxima dose em 01/06/2026.',
-    data: '01/05/2026',
-    hora: '08:00',
-    veterinario: null,
-    clinica: null,
-  },
-  {
-    id: 5,
-    tipo: 'consulta',
-    titulo: 'Consulta Dermatologia',
-    descricao: 'Avaliação de dermatite atópica. Prescrição de shampoo medicamentoso e dieta hipoalergênica.',
-    data: '15/02/2026',
-    hora: '16:00',
-    veterinario: 'Dra. Fernanda Lima',
-    clinica: 'ClyvoVet Unidade Centro',
-  },
-  {
-    id: 6,
-    tipo: 'medicamento',
-    titulo: 'Drontal Plus (vermífugo)',
-    descricao: 'Vermifugação semestral. Próxima dose em 01/09/2026.',
-    data: '01/03/2026',
-    hora: '09:00',
-    veterinario: null,
-    clinica: null,
-  },
-];
 
 const tipoConfig = {
   consulta: {
@@ -113,6 +59,56 @@ function EventIcon({ tipo }) {
 }
 
 export default function Historico() {
+  const [petSelecionado, setPetSelecionado] = useState(null);
+  const { data: pets = [], isLoading: carregandoPets } = usePets();
+  const petId = petSelecionado ?? pets[0]?.id;
+
+  const { data: vacinas = [] } = useVacinasByPet(petId);
+  const { data: agendamentos = [] } = useAgendamentos();
+  const { data: medicamentos = [] } = useMedicamentos();
+  const { data: registros = [] } = useEventos(petId);
+
+  // Junta tudo que aconteceu com o pet numa linha do tempo única (mais recente primeiro)
+  const eventos = [
+    ...vacinas.map((v) => ({
+      id: `v-${v.id}`, tipo: 'vacina', chave: v.data_aplicacao,
+      titulo: `${v.nome} aplicada`,
+      descricao: `Aplicação da vacina ${v.nome}.${v.lote ? ` Lote ${v.lote}.` : ''} Próximo reforço em ${formatarData(v.proximo_reforco)}.`,
+      data: formatarData(v.data_aplicacao), hora: '',
+      veterinario: v.veterinario, clinica: null,
+    })),
+    ...medicamentos.filter((m) => m.pet_id === petId).map((m) => ({
+      id: `m-${m.id}`, tipo: 'medicamento', chave: m.ultima_aplicacao,
+      titulo: `${m.nome} administrado`,
+      descricao: `Dosagem: ${m.dosagem}. Próxima dose em ${formatarData(m.proxima_aplicacao)}.`,
+      data: formatarData(m.ultima_aplicacao), hora: '',
+      veterinario: null, clinica: null,
+    })),
+    ...agendamentos.filter((a) => a.pet_id === petId && a.status !== 'cancelado').map((a) => ({
+      id: `a-${a.id}`, tipo: 'consulta', chave: a.data_consulta,
+      titulo: a.tipo,
+      descricao: `Consulta agendada na ${a.clinica}.`,
+      data: formatarData(a.data_consulta), hora: a.horario,
+      veterinario: null, clinica: null,
+    })),
+    ...registros.map((r) => ({
+      id: `e-${r.id}`, tipo: tipoConfig[r.tipo] ? r.tipo : 'consulta',
+      chave: r.data_evento.slice(0, 10),
+      titulo: r.titulo, descricao: r.descricao || '',
+      data: formatarData(r.data_evento.slice(0, 10)),
+      hora: new Date(r.data_evento).toTimeString().slice(0, 5),
+      veterinario: r.veterinario, clinica: r.clinica,
+    })),
+  ].sort((x, y) => y.chave.localeCompare(x.chave));
+
+  if (carregandoPets) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.background }}>
+        <ActivityIndicator size="large" color={COLORS.accent} />
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
 
@@ -138,8 +134,15 @@ export default function Historico() {
         </View>
       </View>
 
+      <PetChips pets={pets} selectedId={petId} onSelect={setPetSelecionado} />
+
       {/* TIMELINE */}
       <View style={styles.timeline}>
+        {eventos.length === 0 && (
+          <Text style={{ color: COLORS.textLight, textAlign: 'center', padding: 20 }}>
+            Nenhum registro de saúde para este pet ainda.
+          </Text>
+        )}
         {eventos.map((evento, index) => {
           const config = tipoConfig[evento.tipo];
           return (
@@ -160,7 +163,7 @@ export default function Historico() {
                     <Text style={styles.eventTitle}>{evento.titulo}</Text>
                     <View style={styles.eventMeta}>
                       <Ionicons name="time-outline" size={12} color={COLORS.textLight} />
-                      <Text style={styles.eventMetaText}>{evento.data} às {evento.hora}</Text>
+                      <Text style={styles.eventMetaText}>{evento.hora ? `${evento.data} às ${evento.hora}` : evento.data}</Text>
                     </View>
                   </View>
                   <View style={[styles.typeBadge, { backgroundColor: config.bg }]}>

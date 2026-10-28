@@ -10,11 +10,10 @@ import {
 
 import { useState, useEffect } from 'react';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import { router } from 'expo-router';
 
 import { useAuth } from '../../context/AuthContext';
+import { usePerfil, useSavePerfil } from '../../hooks/usePerfil';
 import COLORS from '../../constants/colors';
 
 export default function Perfil() {
@@ -25,69 +24,30 @@ export default function Perfil() {
   const [email, setEmail] = useState('');
   const [telefone, setTelefone] = useState('');
 
+  // Nome e e-mail vêm da conta autenticada; telefone vem da tabela perfis (Supabase)
+  const { data: perfil, isLoading: carregandoPerfil } = usePerfil();
+  const salvarMutation = useSavePerfil();
+
   useEffect(() => {
+    setNome(user?.user_metadata?.nome ?? '');
+    setEmail(user?.email ?? '');
+  }, [user]);
 
-    carregarPerfil();
-
-  }, []);
-
-  const carregarPerfil = async () => {
-
-    try {
-
-      // Nome e e-mail vêm da conta autenticada no Supabase (fonte da verdade)
-      setNome(user?.user_metadata?.nome ?? '');
-      setEmail(user?.email ?? '');
-
-      // Telefone é um dado complementar, ainda local por simplicidade
-      const dados = await AsyncStorage.getItem('@perfil_telefone');
-
-      if (dados) {
-        setTelefone(JSON.parse(dados).telefone);
-      }
-
-    } catch (e) {
-
-      console.log('Erro ao carregar perfil', e);
-
-    }
-
-  };
+  useEffect(() => {
+    if (perfil?.telefone) setTelefone(perfil.telefone);
+  }, [perfil]);
 
   const salvarPerfil = async () => {
-
     if (!telefone) {
-
-      Alert.alert(
-        'Atenção',
-        'Preencha o telefone!'
-      );
-
+      Alert.alert('Atenção', 'Preencha o telefone!');
       return;
-
     }
-
     try {
-
-      await AsyncStorage.setItem(
-        '@perfil_telefone',
-        JSON.stringify({ telefone })
-      );
-
-      Alert.alert(
-        'Sucesso',
-        'Perfil atualizado com sucesso!'
-      );
-
+      await salvarMutation.mutateAsync({ telefone });
+      Alert.alert('Sucesso', 'Perfil atualizado com sucesso!');
     } catch (e) {
-
-      Alert.alert(
-        'Erro',
-        'Não foi possível salvar o perfil.'
-      );
-
+      Alert.alert('Erro', 'Não foi possível salvar o perfil.');
     }
-
   };
 
   const logout = async () => {

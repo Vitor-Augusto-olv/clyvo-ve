@@ -91,3 +91,14 @@ function calcularStatus(proximoReforco) {
   const diasRestantes = Math.floor((dataReforco - hoje) / (1000 * 60 * 60 * 24));
   return diasRestantes <= 30 ? 'alerta' : 'ok';
 }
+
+// Todas as vacinas do tutor (RLS filtra pelo usuário) - usado na Home
+export async function getTodasVacinas() {
+  const { data, error } = await supabase
+    .from('vacinas')
+    .select('*')
+    .order('proximo_reforco', { ascending: true });
+
+  if (error) throw error;
+  return data;
+}

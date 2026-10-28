@@ -55,3 +55,10 @@ export function useDeleteVacina() {
     },
   });
 }
+
+export function useTodasVacinas() {
+  return useQuery({
+    queryKey: ['vacinas', 'todas'],
+    queryFn: vacinasService.getTodasVacinas,
+  });
+}
