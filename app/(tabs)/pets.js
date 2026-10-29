@@ -10,10 +10,11 @@ import {
   RefreshControl,
 } from 'react-native';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { router } from 'expo-router';
 
 import COLORS from '../../constants/colors';
+import { useTheme } from '../../context/ThemeContext';
 import { usePets, useUpdatePet, useDeletePet } from '../../hooks/usePets';
 
 import {
@@ -23,6 +24,8 @@ import {
 } from '@expo/vector-icons';
 
 export default function Pets() {
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
 
   const { data: pets, isLoading, isRefetching, refetch, isError } = usePets();
   const { mutate: atualizarPet, isPending: salvando } = useUpdatePet();
@@ -114,7 +117,7 @@ export default function Pets() {
 
       {isLoading ? (
         <View style={styles.emptyContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={COLORS.title} />
         </View>
       ) : isError ? (
         <View style={styles.emptyContainer}>
@@ -244,7 +247,7 @@ export default function Pets() {
                 style={styles.vacinasButton}
                 onPress={() => router.push(`/vacina/${petSelecionado.id}?nome=${petSelecionado.nome}`)}
               >
-                <Ionicons name="medkit-outline" size={20} color={COLORS.primary} />
+                <Ionicons name="medkit-outline" size={20} color={COLORS.title} />
                 <Text style={styles.vacinasButtonText}>Gerenciar vacinas</Text>
               </TouchableOpacity>
 
@@ -279,7 +282,7 @@ export default function Pets() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (COLORS) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -323,7 +326,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 18,
-    backgroundColor: '#F4F7FB',
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
@@ -331,7 +334,7 @@ const styles = StyleSheet.create({
   petName: {
     fontSize: 19,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.title,
   },
   petInfo: {
     fontSize: 14,
@@ -381,7 +384,7 @@ const styles = StyleSheet.create({
   detailsTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.title,
     marginLeft: 10,
   },
   detailsText: {
@@ -400,7 +403,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   editInput: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 14,
@@ -412,7 +415,7 @@ const styles = StyleSheet.create({
   vacinasButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F4F7FB',
+    backgroundColor: COLORS.background,
     padding: 14,
     borderRadius: 16,
     marginTop: 10,
@@ -420,7 +423,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   vacinasButtonText: {
-    color: COLORS.primary,
+    color: COLORS.title,
     fontWeight: 'bold',
     marginLeft: 8,
   },
@@ -437,14 +440,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   editButton: {
-    backgroundColor: '#F4F7FB',
+    backgroundColor: COLORS.background,
   },
   editButtonText: {
-    color: COLORS.primary,
+    color: COLORS.title,
     fontWeight: 'bold',
   },
   cancelButton: {
-    backgroundColor: '#F4F7FB',
+    backgroundColor: COLORS.background,
   },
   cancelButtonText: {
     color: COLORS.textLight,

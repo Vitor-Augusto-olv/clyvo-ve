@@ -11,9 +11,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 import COLORS from '../../constants/colors';
+import { useTheme } from '../../context/ThemeContext';
 import { useCreatePet } from '../../hooks/usePets';
 
 import {
@@ -23,6 +24,8 @@ import {
 } from '@expo/vector-icons';
 
 export default function Cadastrar() {
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
 
   const [nome, setNome] = useState('');
   const [especie, setEspecie] = useState('');
@@ -174,7 +177,7 @@ export default function Cadastrar() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (COLORS) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -233,7 +236,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 18,
@@ -248,7 +251,7 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     flexDirection: 'row',
-    backgroundColor: '#F4F7FB',
+    backgroundColor: COLORS.background,
     borderRadius: 18,
     padding: 16,
     marginTop: 25,

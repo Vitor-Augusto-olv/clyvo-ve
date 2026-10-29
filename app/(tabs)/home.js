@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   View,
   Text,
@@ -16,6 +17,7 @@ import { useMedicamentos } from '../../hooks/useMedicamentos';
 import { diasAte, formatarData, hojeISO, textoPrazo } from '../../utils/datas';
 
 import COLORS from '../../constants/colors';
+import { useTheme } from '../../context/ThemeContext';
 
 import {
   MaterialIcons,
@@ -24,11 +26,13 @@ import {
 } from '@expo/vector-icons';
 
 const statusConfig = {
-  ok: { color: '#22C55E', bg: '#F0FDF4', icon: 'checkmark-circle' },
-  alerta: { color: '#F59E0B', bg: '#FFFBEB', icon: 'warning' },
+  ok: { color: '#22C55E', bg: 'rgba(34,197,94,0.12)', icon: 'checkmark-circle' },
+  alerta: { color: '#F59E0B', bg: 'rgba(245,158,11,0.14)', icon: 'warning' },
 };
 
 export default function Home() {
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const router = useRouter();
   const { user } = useAuth();
   const nomeUsuario = user?.user_metadata?.nome ?? '';
@@ -143,7 +147,7 @@ export default function Home() {
           <View key={acao.id} style={styles.acaoRow}>
             <View style={[
               styles.acaoIconBox,
-              { backgroundColor: acao.urgente ? '#FFF0F3' : COLORS.background },
+              { backgroundColor: acao.urgente ? 'rgba(230,57,99,0.10)' : COLORS.background },
             ]}>
               {acao.iconLib === 'fa5' && (
                 <FontAwesome5
@@ -251,7 +255,7 @@ export default function Home() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (COLORS) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -314,7 +318,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
     marginHorizontal: 16,
     marginTop: 20,
     padding: 18,
@@ -334,18 +338,18 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 14,
-    backgroundColor: '#FFF0F3',
+    backgroundColor: 'rgba(230,57,99,0.10)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   cardTitle: {
     fontSize: 17,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.title,
   },
   cardDivider: {
     height: 1,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: COLORS.border,
     marginVertical: 14,
   },
   acaoRow: {
@@ -372,7 +376,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   urgenteTag: {
-    backgroundColor: '#FFF0F3',
+    backgroundColor: 'rgba(230,57,99,0.10)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 99,
@@ -401,11 +405,11 @@ const styles = StyleSheet.create({
   servicesTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.title,
     marginBottom: 12,
   },
   serviceButton: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
     padding: 16,
     borderRadius: 18,
     marginBottom: 10,
@@ -427,13 +431,13 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 14,
-    backgroundColor: '#FFF0F3',
+    backgroundColor: 'rgba(230,57,99,0.10)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   serviceText: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.primary,
+    color: COLORS.title,
   },
 });

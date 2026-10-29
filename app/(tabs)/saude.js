@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import PetChips from '../../components/PetChips';
 import { usePets } from '../../hooks/usePets';
 import { useVacinasByPet } from '../../hooks/useVacinas';
@@ -17,13 +17,16 @@ import { useAgendamentos } from '../../hooks/useAgendamentos';
 import { useMedicamentos, useCreateMedicamento, useDeleteMedicamento } from '../../hooks/useMedicamentos';
 import { brParaISO, diasAte, formatarData } from '../../utils/datas';
 import COLORS from '../../constants/colors';
+import { useTheme } from '../../context/ThemeContext';
 import { Ionicons, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 
 function StatusBadge({ status }) {
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const config = {
-    ok: { color: '#22C55E', bg: '#F0FDF4', label: 'Realizada' },
-    alerta: { color: '#F59E0B', bg: '#FFFBEB', label: 'Atenção' },
-    agendado: { color: '#3B82F6', bg: '#EFF6FF', label: 'Agendado' },
+    ok: { color: '#22C55E', bg: 'rgba(34,197,94,0.12)', label: 'Realizada' },
+    alerta: { color: '#F59E0B', bg: 'rgba(245,158,11,0.14)', label: 'Atenção' },
+    agendado: { color: '#3B82F6', bg: 'rgba(59,130,246,0.12)', label: 'Agendado' },
   };
   const c = config[status] || config.agendado;
   return (
@@ -35,6 +38,8 @@ function StatusBadge({ status }) {
 }
 
 export default function Saude() {
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const [abaAtiva, setAbaAtiva] = useState('vacinas');
   const [petSelecionado, setPetSelecionado] = useState(null);
   const [mostrarForm, setMostrarForm] = useState(false);
@@ -356,7 +361,7 @@ export default function Saude() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (COLORS) => StyleSheet.create({
   formInput: {
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -431,7 +436,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginHorizontal: 16,
     marginTop: 20,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
     borderRadius: 16,
     padding: 4,
     shadowColor: '#000',
@@ -466,7 +471,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
     borderRadius: 22,
     padding: 18,
     marginBottom: 14,
@@ -485,18 +490,18 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 14,
-    backgroundColor: '#FFF0F3',
+    backgroundColor: 'rgba(230,57,99,0.10)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   cardTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.title,
   },
   cardDivider: {
     height: 1,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: COLORS.border,
     marginVertical: 14,
   },
   infoRow: {
