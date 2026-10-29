@@ -13,9 +13,9 @@ import { useState, useMemo } from 'react';
 import PetChips from '../../components/PetChips';
 import { usePets } from '../../hooks/usePets';
 import { useVacinasByPet } from '../../hooks/useVacinas';
-import { useAgendamentos } from '../../hooks/useAgendamentos';
+import { useAgendamentos, useCancelAgendamento } from '../../hooks/useAgendamentos';
 import { useMedicamentos, useCreateMedicamento, useDeleteMedicamento } from '../../hooks/useMedicamentos';
-import { brParaISO, diasAte, formatarData } from '../../utils/datas';
+import { brParaISO, diasAte, formatarData, horasAte } from '../../utils/datas';
 import COLORS from '../../constants/colors';
 import { useTheme } from '../../context/ThemeContext';
 import { Ionicons, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
@@ -55,6 +55,7 @@ export default function Saude() {
   const { data: medicamentosDb = [] } = useMedicamentos();
   const criarMedicamento = useCreateMedicamento();
   const excluirMedicamento = useDeleteMedicamento();
+  const cancelarConsulta = useCancelAgendamento();
 
   // Adapta os registros do banco para o formato que as telas já usavam
   const vacinas = vacinasDb.map((v) => ({
@@ -77,6 +78,7 @@ export default function Saude() {
       clinica: a.clinica,
       observacao: '—',
       status: 'agendado',
+      horas: horasAte(a.data_consulta, a.horario),
     }));
 
   const medicamentos = medicamentosDb
@@ -104,6 +106,32 @@ export default function Saude() {
     } catch (e) {
       Alert.alert('Erro', 'Não foi possível salvar o medicamento.');
     }
+  };
+
+  const confirmarCancelamento = (c) => {
+    Alert.alert(
+      'Cancelar consulta',
+      `${c.tipo} em ${c.data} às ${c.horario}.\nDeseja realmente cancelar?`,
+      [
+        { text: 'Manter', style: 'cancel' },
+        {
+          text: 'Cancelar consulta',
+          style: 'destructive',
+          onPress: () =>
+            cancelarConsulta.mutate(c.id, {
+              onError: (e) => {
+                const prazo = String(e?.message ?? '').includes('24h');
+                Alert.alert(
+                  prazo ? 'Prazo expirado' : 'Erro',
+                  prazo
+                    ? 'O cancelamento só é permitido com 24 horas ou mais de antecedência.'
+                    : 'Não foi possível cancelar a consulta.'
+                );
+              },
+            }),
+        },
+      ]
+    );
   };
 
   const confirmarExclusao = (id) => {
@@ -278,6 +306,21 @@ export default function Saude() {
                     <Text style={styles.observacaoText}>{c.observacao}</Text>
                   </View>
                 )}
+
+                {c.horas >= 24 && (
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => confirmarCancelamento(c)}
+                    disabled={cancelarConsulta.isPending}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancelar consulta</Text>
+                  </TouchableOpacity>
+                )}
+                {c.horas >= 0 && c.horas < 24 && (
+                  <Text style={styles.cancelHint}>
+                    Cancelamento disponível até 24h antes da consulta
+                  </Text>
+                )}
               </View>
             ))
           )}
@@ -362,6 +405,16 @@ export default function Saude() {
 }
 
 const createStyles = (COLORS) => StyleSheet.create({
+  cancelButton: {
+    marginTop: 14,
+    paddingVertical: 11,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+  },
+  cancelButtonText: { color: COLORS.accent, fontWeight: '700' },
+  cancelHint: { marginTop: 12, color: COLORS.textLight, fontSize: 12, textAlign: 'center' },
   formInput: {
     borderWidth: 1,
     borderColor: COLORS.border,
