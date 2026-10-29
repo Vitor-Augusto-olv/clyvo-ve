@@ -7,7 +7,8 @@ import {
 } from 'react-native';
 
 import COLORS from '../constants/colors';
-import { useState } from 'react';
+import { useTheme } from '../context/ThemeContext';
+import { useState, useMemo } from 'react';
 import PetChips from '../components/PetChips';
 import { usePets } from '../hooks/usePets';
 import { useVacinasByPet } from '../hooks/useVacinas';
@@ -22,26 +23,28 @@ const tipoConfig = {
     icon: 'local-hospital',
     iconLib: 'material',
     color: '#3B82F6',
-    bg: '#EFF6FF',
+    bg: 'rgba(59,130,246,0.12)',
     label: 'Consulta',
   },
   vacina: {
     icon: 'syringe',
     iconLib: 'fa5',
     color: '#22C55E',
-    bg: '#F0FDF4',
+    bg: 'rgba(34,197,94,0.12)',
     label: 'Vacina',
   },
   medicamento: {
     icon: 'medical',
     iconLib: 'ionicon',
     color: COLORS.accent,
-    bg: '#FFF0F3',
+    bg: 'rgba(230,57,99,0.10)',
     label: 'Medicamento',
   },
 };
 
 function EventIcon({ tipo }) {
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const c = tipoConfig[tipo];
   return (
     <View style={[styles.eventIconBox, { backgroundColor: c.bg }]}>
@@ -59,6 +62,8 @@ function EventIcon({ tipo }) {
 }
 
 export default function Historico() {
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const [petSelecionado, setPetSelecionado] = useState(null);
   const { data: pets = [], isLoading: carregandoPets } = usePets();
   const petId = petSelecionado ?? pets[0]?.id;
@@ -199,7 +204,7 @@ export default function Historico() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (COLORS) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -280,14 +285,14 @@ const styles = StyleSheet.create({
   timelineLine: {
     width: 2,
     flex: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: COLORS.border,
     marginTop: 6,
     marginBottom: 6,
     minHeight: 20,
   },
   eventCard: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
     borderRadius: 18,
     padding: 16,
     marginBottom: 12,
@@ -306,7 +311,7 @@ const styles = StyleSheet.create({
   eventTitle: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.title,
     marginBottom: 4,
   },
   eventMeta: {
@@ -335,7 +340,7 @@ const styles = StyleSheet.create({
   },
   eventFooter: {
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    borderTopColor: COLORS.border,
     paddingTop: 10,
     gap: 5,
   },

@@ -13,6 +13,7 @@ import { usePets } from '../hooks/usePets';
 import { useAgendamentos, useCreateAgendamento } from '../hooks/useAgendamentos';
 import { proximosDiasUteis } from '../utils/datas';
 import COLORS from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 
 const clinicas = [
@@ -42,6 +43,8 @@ const tiposConsulta = [
 const horariosDisponiveis = ['08:00', '09:30', '11:00', '14:00', '15:30', '17:00'];
 
 export default function Agendar() {
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const [clinicaSelecionada, setClinicaSelecionada] = useState(null);
   const [tipoSelecionado, setTipoSelecionado] = useState(null);
   const [diaSelecionado, setDiaSelecionado] = useState(null);
@@ -307,7 +310,7 @@ export default function Agendar() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (COLORS) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -349,7 +352,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 17,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.title,
     marginBottom: 12,
     marginTop: 20,
   },
@@ -360,7 +363,7 @@ const styles = StyleSheet.create({
   },
   tipoCard: {
     width: '47%',
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
     borderRadius: 18,
     padding: 16,
     alignItems: 'center',
@@ -375,24 +378,24 @@ const styles = StyleSheet.create({
   },
   tipoCardActive: {
     borderColor: COLORS.accent,
-    backgroundColor: '#FFF0F3',
+    backgroundColor: 'rgba(230,57,99,0.10)',
   },
   tipoIconBox: {
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: '#FFF0F3',
+    backgroundColor: 'rgba(230,57,99,0.10)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   tipoNome: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.primary,
+    color: COLORS.title,
     textAlign: 'center',
   },
   clinicaCard: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
     borderRadius: 20,
     padding: 18,
     marginBottom: 12,
@@ -417,14 +420,14 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 14,
-    backgroundColor: '#FFF0F3',
+    backgroundColor: 'rgba(230,57,99,0.10)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   clinicaNome: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.title,
     marginBottom: 4,
   },
   clinicaEnderecoRow: {
@@ -476,7 +479,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   diaCard: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
     borderRadius: 16,
     padding: 14,
     alignItems: 'center',
@@ -502,7 +505,7 @@ const styles = StyleSheet.create({
   diaNumero: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.title,
   },
   horariosGrid: {
     flexDirection: 'row',
@@ -510,7 +513,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   horarioCard: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
     borderRadius: 14,
     paddingVertical: 12,
     paddingHorizontal: 18,
@@ -529,10 +532,10 @@ const styles = StyleSheet.create({
   horarioText: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.primary,
+    color: COLORS.title,
   },
   resumoCard: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
     borderRadius: 20,
     padding: 18,
     marginTop: 24,
@@ -548,7 +551,7 @@ const styles = StyleSheet.create({
   resumoTitle: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.title,
     marginBottom: 4,
   },
   resumoRow: {
