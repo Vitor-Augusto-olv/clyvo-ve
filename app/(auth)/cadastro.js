@@ -12,14 +12,17 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useRouter } from 'expo-router';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 
 import { useAuth } from '../../context/AuthContext';
 import COLORS from '../../constants/colors';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function Cadastro() {
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const { signUp } = useAuth();
   const router = useRouter();
 
@@ -181,7 +184,7 @@ function traduzErro(mensagem) {
   return mensagem;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (COLORS) => StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: COLORS.background,
@@ -229,13 +232,13 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.title,
     marginBottom: 25,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 18,

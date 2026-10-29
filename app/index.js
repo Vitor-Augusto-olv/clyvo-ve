@@ -2,8 +2,10 @@ import { View, ActivityIndicator } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
 import COLORS from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Index() {
+  const { colors: COLORS } = useTheme();
   const { session, loading } = useAuth();
 
   if (loading) {
