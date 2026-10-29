@@ -60,3 +60,10 @@ export function proximosDiasUteis(n) {
   }
   return lista;
 }
+
+// Horas que faltam até a consulta (negativo se já passou).
+export function horasAte(iso, horario) {
+  const [a, m, dia] = iso.split('-').map(Number);
+  const [hh, mm] = horario.split(':').map(Number);
+  return (new Date(a, m - 1, dia, hh, mm) - new Date()) / 3600000;
+}
