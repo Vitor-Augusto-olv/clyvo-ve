@@ -95,7 +95,11 @@ export default function Agendar() {
       setDiaSelecionado(null);
       setHorarioSelecionado(null);
     } catch (e) {
-      Alert.alert('Erro', 'Não foi possível salvar o agendamento.');
+      if (e?.code === '23505') {
+        Alert.alert('Horário indisponível', 'Esse horário acabou de ser ocupado. Escolha outro.');
+      } else {
+        Alert.alert('Erro', 'Não foi possível salvar o agendamento.');
+      }
     }
   };
 
