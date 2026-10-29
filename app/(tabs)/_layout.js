@@ -9,8 +9,10 @@ import {
 
 import { useAuth } from '../../context/AuthContext';
 import COLORS from '../../constants/colors';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function TabsLayout() {
+  const { colors: COLORS } = useTheme();
   const { session, loading } = useAuth();
 
   if (loading) {
@@ -49,7 +51,7 @@ export default function TabsLayout() {
 
           height: 75,
 
-          backgroundColor: COLORS.white,
+          backgroundColor: COLORS.card,
 
           borderRadius: 25,
 

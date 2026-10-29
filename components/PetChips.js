@@ -1,9 +1,13 @@
+import { useMemo } from 'react';
 // components/PetChips.js
 // Seletor de pet reutilizado em Saúde, Agendar e Histórico.
 import { ScrollView, TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import COLORS from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 
 export default function PetChips({ pets = [], selectedId, onSelect }) {
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   if (pets.length === 0) {
     return (
       <View style={styles.vazio}>
@@ -30,7 +34,7 @@ export default function PetChips({ pets = [], selectedId, onSelect }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (COLORS) => StyleSheet.create({
   lista: { paddingHorizontal: 20, paddingVertical: 14, gap: 8 },
   chip: {
     paddingHorizontal: 16,
