@@ -8,15 +8,18 @@ import {
   Alert 
 } from 'react-native';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import { router } from 'expo-router';
 
 import { useAuth } from '../../context/AuthContext';
 import { usePerfil, useSavePerfil } from '../../hooks/usePerfil';
 import COLORS from '../../constants/colors';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function Perfil() {
+  const { colors: COLORS, mode, setMode } = useTheme();
+  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
 
   const { user, signOut } = useAuth();
 
@@ -133,6 +136,32 @@ export default function Perfil() {
 
         </View>
 
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Aparência</Text>
+          <View style={styles.themeRow}>
+            {[
+              { id: 'system', label: 'Sistema' },
+              { id: 'light', label: 'Claro' },
+              { id: 'dark', label: 'Escuro' },
+            ].map((op) => (
+              <TouchableOpacity
+                key={op.id}
+                style={[styles.themeOption, mode === op.id && styles.themeOptionActive]}
+                onPress={() => setMode(op.id)}
+              >
+                <Text style={[styles.themeOptionText, mode === op.id && { color: '#fff' }]}>
+                  {op.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.card} onPress={() => router.push('/sobre')}>
+          <Text style={styles.sectionTitle}>Sobre o App</Text>
+          <Text style={{ color: COLORS.textLight }}>Versão, commit e informações do projeto</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.saveButton}
           onPress={salvarPerfil}
@@ -163,7 +192,20 @@ export default function Perfil() {
 
 }
 
-const styles = StyleSheet.create({
+const createStyles = (COLORS) => StyleSheet.create({
+
+  themeRow: { flexDirection: 'row', gap: 8 },
+  themeOption: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  themeOptionActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
+  themeOptionText: { color: COLORS.text, fontWeight: '600' },
 
   container: {
     flex: 1,
@@ -244,7 +286,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.title,
     marginBottom: 10,
   },
 
@@ -257,7 +299,7 @@ const styles = StyleSheet.create({
   },
 
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
 
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -274,7 +316,7 @@ const styles = StyleSheet.create({
   },
 
   inputDisabled: {
-    backgroundColor: '#F0F2F5',
+    backgroundColor: COLORS.border,
     color: COLORS.textLight,
   },
 
