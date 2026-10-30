@@ -9,7 +9,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import PetChips from '../../components/PetChips';
 import { usePets } from '../../hooks/usePets';
 import { useVacinasByPet } from '../../hooks/useVacinas';
@@ -41,6 +42,12 @@ export default function Saude() {
   const { colors: COLORS } = useTheme();
   const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const [abaAtiva, setAbaAtiva] = useState('vacinas');
+
+  // Ao tocar numa notificação, abre direto a aba correspondente
+  const { aba, t } = useLocalSearchParams();
+  useEffect(() => {
+    if (['vacinas', 'consultas', 'medicamentos'].includes(aba)) setAbaAtiva(aba);
+  }, [aba, t]);
   const [petSelecionado, setPetSelecionado] = useState(null);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [medNome, setMedNome] = useState('');

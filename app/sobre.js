@@ -1,5 +1,6 @@
 // app/sobre.js - tela "Sobre o App" com a versão e o hash do commit publicado
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import * as Notifications from 'expo-notifications';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -11,6 +12,13 @@ export default function Sobre() {
   const { colors: COLORS } = useTheme();
   const styles = useMemo(() => createStyles(COLORS), [COLORS]);
 
+  const [lembretes, setLembretes] = useState(null);
+  useEffect(() => {
+    Notifications.getAllScheduledNotificationsAsync()
+      .then((lista) => setLembretes(lista.length))
+      .catch(() => setLembretes(null));
+  }, []);
+
   const config = Constants.expoConfig ?? {};
   const versao = config.version ?? '—';
   const commit = config.extra?.commitHash ?? 'desconhecido';
@@ -21,6 +29,7 @@ export default function Sobre() {
     { rotulo: 'Versão', valor: versao },
     { rotulo: 'Commit (hash curto)', valor: commitCurto },
     { rotulo: 'Plataforma', valor: Platform.OS },
+    { rotulo: 'Lembretes agendados', valor: lembretes === null ? '—' : String(lembretes) },
     { rotulo: 'Projeto', valor: 'Challenge FIAP 2026 – 2º ano ADS' },
   ];
 
