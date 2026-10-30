@@ -10,6 +10,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import COLORS from '../../constants/colors';
 import { useTheme } from '../../context/ThemeContext';
+import LembretesSync from '../../components/LembretesSync';
 
 export default function TabsLayout() {
   const { colors: COLORS } = useTheme();
@@ -30,7 +31,8 @@ export default function TabsLayout() {
   }
 
   return (
-
+    <>
+    <LembretesSync />
     <Tabs
 
       screenOptions={{
@@ -193,6 +195,6 @@ export default function TabsLayout() {
       />
 
     </Tabs>
-
+    </>
   );
 }
