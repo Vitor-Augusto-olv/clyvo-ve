@@ -11,6 +11,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.vitorabreu.clyvovet",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -24,6 +25,18 @@
       "expo-font",
       "expo-status-bar",
       "expo-notifications"
-    ]
+    ],
+    "extra": {
+      "commitHash": "665611df60e93d4d8633fb1add00f7e7e70ad915",
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "cedb75fa-8696-4c97-a26b-02357982f862"
+      }
+    },
+    "owner": "vitor_augusto_oliveira"
   }
 }
