@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as vacinasService from '../services/vacinas';
 import { useAuth } from '../context/AuthContext';
+import { notificarVacinaRegistrada } from '../services/notificacoes';
 
 export function useVacinasByPet(petId) {
   return useQuery({
@@ -28,7 +29,8 @@ export function useCreateVacina() {
         lote,
       }),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['vacinas', variables.petId] });
+      queryClient.invalidateQueries({ queryKey: ['vacinas'] });
+      notificarVacinaRegistrada(variables);
     },
   });
 }
@@ -40,7 +42,7 @@ export function useUpdateVacina() {
     mutationFn: ({ id, petId, ...dados }) =>
       vacinasService.updateVacina(id, dados),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['vacinas', variables.petId] });
+      queryClient.invalidateQueries({ queryKey: ['vacinas'] });
     },
   });
 }
@@ -51,7 +53,7 @@ export function useDeleteVacina() {
   return useMutation({
     mutationFn: ({ id }) => vacinasService.deleteVacina(id),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['vacinas', variables.petId] });
+      queryClient.invalidateQueries({ queryKey: ['vacinas'] });
     },
   });
 }

@@ -2,6 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as service from '../services/medicamentos';
 import { useAuth } from '../context/AuthContext';
+import { notificarMedicamentoRegistrado } from '../services/notificacoes';
 
 export function useMedicamentos() {
   return useQuery({ queryKey: ['medicamentos'], queryFn: service.getTodosMedicamentos });
@@ -12,7 +13,10 @@ export function useCreateMedicamento() {
   const { user } = useAuth();
   return useMutation({
     mutationFn: (dados) => service.createMedicamento({ userId: user.id, ...dados }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['medicamentos'] }),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['medicamentos'] });
+      notificarMedicamentoRegistrado(variables);
+    },
   });
 }
 
