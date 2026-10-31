@@ -104,6 +104,7 @@ export default function Pets() {
   return (
     <ScrollView
       style={styles.container}
+      contentContainerStyle={{ paddingBottom: 120 }}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={COLORS.primary} />

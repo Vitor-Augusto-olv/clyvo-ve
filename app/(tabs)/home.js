@@ -91,7 +91,7 @@ export default function Home() {
   ];
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
 
       {/* HEADER */}
       <View style={styles.header}>

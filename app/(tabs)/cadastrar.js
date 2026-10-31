@@ -73,6 +73,7 @@ export default function Cadastrar() {
     >
       <ScrollView
         style={styles.container}
+        contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >

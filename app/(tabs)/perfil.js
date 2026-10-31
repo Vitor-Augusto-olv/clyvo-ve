@@ -66,7 +66,7 @@ export default function Perfil() {
 
   return (
 
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }}>
 
       <View style={styles.header}>
 
