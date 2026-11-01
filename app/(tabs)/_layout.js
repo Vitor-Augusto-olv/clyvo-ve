@@ -9,8 +9,11 @@ import {
 
 import { useAuth } from '../../context/AuthContext';
 import COLORS from '../../constants/colors';
+import { useTheme } from '../../context/ThemeContext';
+import LembretesSync from '../../components/LembretesSync';
 
 export default function TabsLayout() {
+  const { colors: COLORS } = useTheme();
   const { session, loading } = useAuth();
 
   if (loading) {
@@ -28,7 +31,8 @@ export default function TabsLayout() {
   }
 
   return (
-
+    <>
+    <LembretesSync />
     <Tabs
 
       screenOptions={{
@@ -49,7 +53,7 @@ export default function TabsLayout() {
 
           height: 75,
 
-          backgroundColor: COLORS.white,
+          backgroundColor: COLORS.card,
 
           borderRadius: 25,
 
@@ -191,6 +195,6 @@ export default function TabsLayout() {
       />
 
     </Tabs>
-
+    </>
   );
 }

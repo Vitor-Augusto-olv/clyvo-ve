@@ -9,11 +9,12 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 
 import COLORS from '../../constants/colors';
+import { useTheme } from '../../context/ThemeContext';
 import {
   useVacinasByPet,
   useCreateVacina,
@@ -30,6 +31,8 @@ const FORM_VAZIO = {
 };
 
 export default function VacinasDoPet() {
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const { petId, nome } = useLocalSearchParams();
   const router = useRouter();
 
@@ -158,7 +161,7 @@ export default function VacinasDoPet() {
 
       {isLoading ? (
         <View style={styles.emptyContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={COLORS.title} />
         </View>
       ) : isError ? (
         <View style={styles.emptyContainer}>
@@ -197,7 +200,7 @@ export default function VacinasDoPet() {
 
             <View style={styles.cardActions}>
               <TouchableOpacity onPress={() => abrirEdicao(vacina)} style={styles.actionButton}>
-                <Ionicons name="pencil" size={16} color={COLORS.primary} />
+                <Ionicons name="pencil" size={16} color={COLORS.title} />
                 <Text style={styles.actionButtonText}>Editar</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => confirmarRemocao(vacina)} style={styles.actionButton}>
@@ -300,7 +303,7 @@ function formatarData(dataIso) {
   return `${dia}/${mes}/${ano}`;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (COLORS) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -341,7 +344,7 @@ const styles = StyleSheet.create({
   vacinaNome: {
     fontSize: 17,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.title,
   },
   vacinaInfo: {
     fontSize: 13,
@@ -354,10 +357,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   statusOk: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: 'rgba(34,197,94,0.18)',
   },
   statusAlerta: {
-    backgroundColor: '#FFF4D9',
+    backgroundColor: 'rgba(245,158,11,0.18)',
   },
   statusBadgeText: {
     fontSize: 12,
@@ -380,7 +383,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.primary,
+    color: COLORS.title,
   },
   formCard: {
     backgroundColor: COLORS.card,
@@ -393,7 +396,7 @@ const styles = StyleSheet.create({
   formTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.title,
     marginBottom: 14,
   },
   label: {
@@ -404,7 +407,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 14,
@@ -426,7 +429,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cancelButton: {
-    backgroundColor: '#F4F7FB',
+    backgroundColor: COLORS.background,
   },
   cancelButtonText: {
     color: COLORS.textLight,

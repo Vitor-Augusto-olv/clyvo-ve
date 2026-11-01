@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,6 +7,7 @@ import {
 } from 'react-native';
 
 import COLORS from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 
 const vacinas = [
@@ -45,12 +47,14 @@ const vacinas = [
 ];
 
 const statusConfig = {
-  ok: { color: '#22C55E', bg: '#F0FDF4', label: 'Em dia', icon: 'checkmark-circle' },
-  alerta: { color: '#F59E0B', bg: '#FFFBEB', label: 'Reforço próximo', icon: 'warning' },
-  vencida: { color: COLORS.accent, bg: '#FFF0F3', label: 'Vencida', icon: 'alert-circle' },
+  ok: { color: '#22C55E', bg: 'rgba(34,197,94,0.12)', label: 'Em dia', icon: 'checkmark-circle' },
+  alerta: { color: '#F59E0B', bg: 'rgba(245,158,11,0.14)', label: 'Reforço próximo', icon: 'warning' },
+  vencida: { color: COLORS.accent, bg: 'rgba(230,57,99,0.10)', label: 'Vencida', icon: 'alert-circle' },
 };
 
 export default function Vacinas() {
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
 
@@ -142,7 +146,7 @@ export default function Vacinas() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (COLORS) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -209,7 +213,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
     borderRadius: 22,
     padding: 18,
     marginBottom: 16,
@@ -229,14 +233,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 14,
-    backgroundColor: '#FFF0F3',
+    backgroundColor: 'rgba(230,57,99,0.10)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   vaccineName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.title,
     marginBottom: 3,
   },
   vaccineDesc: {
@@ -259,7 +263,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: COLORS.border,
     marginBottom: 14,
   },
   infoGrid: {

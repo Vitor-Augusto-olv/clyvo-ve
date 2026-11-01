@@ -4,80 +4,30 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  TextInput,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 
-import { useState, useCallback } from 'react';
-import { useFocusEffect } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useState, useMemo, useEffect } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import PetChips from '../../components/PetChips';
+import { usePets } from '../../hooks/usePets';
+import { useVacinasByPet } from '../../hooks/useVacinas';
+import { useAgendamentos, useCancelAgendamento } from '../../hooks/useAgendamentos';
+import { useMedicamentos, useCreateMedicamento, useDeleteMedicamento } from '../../hooks/useMedicamentos';
+import { brParaISO, diasAte, formatarData, horasAte } from '../../utils/datas';
 import COLORS from '../../constants/colors';
+import { useTheme } from '../../context/ThemeContext';
 import { Ionicons, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 
-const vacinas = [
-  {
-    id: 1,
-    nome: 'V10 (Múltipla Canina)',
-    dataAplicacao: '12/03/2026',
-    proximoReforco: '12/03/2027',
-    status: 'ok',
-    veterinario: 'Dr. Carlos Mendes',
-    lote: 'LT2026-04A',
-  },
-  {
-    id: 2,
-    nome: 'Antirrábica',
-    dataAplicacao: '12/03/2026',
-    proximoReforco: '12/03/2027',
-    status: 'ok',
-    veterinario: 'Dr. Carlos Mendes',
-    lote: 'LT2026-07B',
-  },
-  {
-    id: 3,
-    nome: 'Gripe Canina (H3N2)',
-    dataAplicacao: '01/01/2026',
-    proximoReforco: '01/07/2026',
-    status: 'alerta',
-    veterinario: 'Dra. Fernanda Lima',
-    lote: 'LT2025-11C',
-  },
-];
-
-const consultasFixas = [
-  {
-    id: 'fixo-1',
-    tipo: 'Check-up Geral',
-    data: '10/04/2026',
-    horario: '14:30',
-    clinica: 'ClyvoVet Unidade Centro',
-    observacao: 'Animal saudável, peso ideal de 12,4 kg.',
-    status: 'ok',
-  },
-];
-
-const medicamentos = [
-  {
-    id: 1,
-    nome: 'Simparic (antipulgas)',
-    dosagem: '1 comprimido/mês',
-    ultimaAplicacao: '01/05/2026',
-    proximaAplicacao: '01/06/2026',
-    status: 'ok',
-  },
-  {
-    id: 2,
-    nome: 'Drontal Plus (vermífugo)',
-    dosagem: '1 comprimido',
-    ultimaAplicacao: '01/03/2026',
-    proximaAplicacao: '01/09/2026',
-    status: 'ok',
-  },
-];
-
 function StatusBadge({ status }) {
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const config = {
-    ok: { color: '#22C55E', bg: '#F0FDF4', label: 'Realizada' },
-    alerta: { color: '#F59E0B', bg: '#FFFBEB', label: 'Atenção' },
-    agendado: { color: '#3B82F6', bg: '#EFF6FF', label: 'Agendado' },
+    ok: { color: '#22C55E', bg: 'rgba(34,197,94,0.12)', label: 'Realizada' },
+    alerta: { color: '#F59E0B', bg: 'rgba(245,158,11,0.14)', label: 'Atenção' },
+    agendado: { color: '#3B82F6', bg: 'rgba(59,130,246,0.12)', label: 'Agendado' },
   };
   const c = config[status] || config.agendado;
   return (
@@ -89,35 +39,122 @@ function StatusBadge({ status }) {
 }
 
 export default function Saude() {
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const [abaAtiva, setAbaAtiva] = useState('vacinas');
-  const [consultas, setConsultas] = useState(consultasFixas);
 
-  useFocusEffect(
-    useCallback(() => {
-      carregarConsultas();
-    }, [])
-  );
+  // Ao tocar numa notificação, abre direto a aba correspondente
+  const { aba, t } = useLocalSearchParams();
+  useEffect(() => {
+    if (['vacinas', 'consultas', 'medicamentos'].includes(aba)) setAbaAtiva(aba);
+  }, [aba, t]);
+  const [petSelecionado, setPetSelecionado] = useState(null);
+  const [mostrarForm, setMostrarForm] = useState(false);
+  const [medNome, setMedNome] = useState('');
+  const [medDosagem, setMedDosagem] = useState('');
+  const [medProxima, setMedProxima] = useState('');
 
-  const carregarConsultas = async () => {
+  const { data: pets = [], isLoading: carregandoPets } = usePets();
+  const petId = petSelecionado ?? pets[0]?.id;
+
+  const { data: vacinasDb = [], isLoading: carregandoVacinas } = useVacinasByPet(petId);
+  const { data: agendamentosDb = [] } = useAgendamentos();
+  const { data: medicamentosDb = [] } = useMedicamentos();
+  const criarMedicamento = useCreateMedicamento();
+  const excluirMedicamento = useDeleteMedicamento();
+  const cancelarConsulta = useCancelAgendamento();
+
+  // Adapta os registros do banco para o formato que as telas já usavam
+  const vacinas = vacinasDb.map((v) => ({
+    id: v.id,
+    nome: v.nome,
+    dataAplicacao: formatarData(v.data_aplicacao),
+    proximoReforco: formatarData(v.proximo_reforco),
+    status: diasAte(v.proximo_reforco) <= 30 ? 'alerta' : 'ok',
+    veterinario: v.veterinario || '—',
+    lote: v.lote || '—',
+  }));
+
+  const consultas = agendamentosDb
+    .filter((a) => a.pet_id === petId && a.status !== 'cancelado')
+    .map((a) => ({
+      id: a.id,
+      tipo: a.tipo,
+      data: formatarData(a.data_consulta),
+      horario: a.horario,
+      clinica: a.clinica,
+      observacao: '—',
+      status: 'agendado',
+      horas: horasAte(a.data_consulta, a.horario),
+    }));
+
+  const medicamentos = medicamentosDb
+    .filter((m) => m.pet_id === petId)
+    .map((m) => ({
+      id: m.id,
+      nome: m.nome,
+      dosagem: m.dosagem,
+      ultimaAplicacao: formatarData(m.ultima_aplicacao),
+      proximaAplicacao: formatarData(m.proxima_aplicacao),
+      status: diasAte(m.proxima_aplicacao) <= 7 ? 'alerta' : 'ok',
+    }));
+
+  const salvarMedicamento = async () => {
+    const iso = brParaISO(medProxima);
+    if (!medNome.trim() || !medDosagem.trim() || !iso) {
+      Alert.alert('Atenção', 'Preencha nome, dosagem e a próxima aplicação no formato dd/mm/aaaa.');
+      return;
+    }
     try {
-      const salvos = await AsyncStorage.getItem('@agendamentos');
-      const agendamentos = salvos ? JSON.parse(salvos) : [];
-
-      const agendamentosFormatados = agendamentos.map((a) => ({
-        id: a.id,
-        tipo: a.tipo,
-        data: a.data,
-        horario: a.horario,
-        clinica: a.clinica,
-        observacao: '—',
-        status: 'agendado',
-      }));
-
-      setConsultas([...consultasFixas, ...agendamentosFormatados]);
+      await criarMedicamento.mutateAsync({
+        petId, nome: medNome.trim(), dosagem: medDosagem.trim(), proximaAplicacao: iso,
+      });
+      setMedNome(''); setMedDosagem(''); setMedProxima(''); setMostrarForm(false);
     } catch (e) {
-      console.log('Erro ao carregar consultas', e);
+      Alert.alert('Erro', 'Não foi possível salvar o medicamento.');
     }
   };
+
+  const confirmarCancelamento = (c) => {
+    Alert.alert(
+      'Cancelar consulta',
+      `${c.tipo} em ${c.data} às ${c.horario}.\nDeseja realmente cancelar?`,
+      [
+        { text: 'Manter', style: 'cancel' },
+        {
+          text: 'Cancelar consulta',
+          style: 'destructive',
+          onPress: () =>
+            cancelarConsulta.mutate(c.id, {
+              onError: (e) => {
+                const prazo = String(e?.message ?? '').includes('24h');
+                Alert.alert(
+                  prazo ? 'Prazo expirado' : 'Erro',
+                  prazo
+                    ? 'O cancelamento só é permitido com 24 horas ou mais de antecedência.'
+                    : 'Não foi possível cancelar a consulta.'
+                );
+              },
+            }),
+        },
+      ]
+    );
+  };
+
+  const confirmarExclusao = (id) => {
+    Alert.alert('Excluir medicamento', 'Deseja remover este medicamento?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Excluir', style: 'destructive', onPress: () => excluirMedicamento.mutate(id) },
+    ]);
+  };
+
+  if (carregandoPets || carregandoVacinas) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.background }}>
+        <ActivityIndicator size="large" color={COLORS.accent} />
+      </View>
+    );
+  }
 
   const abas = [
     { key: 'vacinas', label: 'Vacinas', icon: 'medkit' },
@@ -126,7 +163,7 @@ export default function Saude() {
   ];
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
 
       {/* HEADER */}
       <View style={styles.header}>
@@ -158,6 +195,8 @@ export default function Saude() {
         </View>
       </View>
 
+      <PetChips pets={pets} selectedId={petId} onSelect={setPetSelecionado} />
+
       {/* ABAS */}
       <View style={styles.tabsContainer}>
         {abas.map((aba) => (
@@ -181,6 +220,12 @@ export default function Saude() {
       {/* VACINAS */}
       {abaAtiva === 'vacinas' && (
         <View style={styles.section}>
+          {vacinas.length === 0 && (
+            <View style={styles.emptyContainer}>
+              <FontAwesome5 name="syringe" size={40} color={COLORS.textLight} />
+              <Text style={styles.emptyText}>Nenhuma vacina registrada para este pet</Text>
+            </View>
+          )}
           {vacinas.map((v) => (
             <View key={v.id} style={styles.card}>
               <View style={styles.cardHeader}>
@@ -268,6 +313,21 @@ export default function Saude() {
                     <Text style={styles.observacaoText}>{c.observacao}</Text>
                   </View>
                 )}
+
+                {c.horas >= 24 && (
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => confirmarCancelamento(c)}
+                    disabled={cancelarConsulta.isPending}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancelar consulta</Text>
+                  </TouchableOpacity>
+                )}
+                {c.horas >= 0 && c.horas < 24 && (
+                  <Text style={styles.cancelHint}>
+                    Cancelamento disponível até 24h antes da consulta
+                  </Text>
+                )}
               </View>
             ))
           )}
@@ -277,6 +337,38 @@ export default function Saude() {
       {/* MEDICAMENTOS */}
       {abaAtiva === 'medicamentos' && (
         <View style={styles.section}>
+          <TouchableOpacity
+            style={{ backgroundColor: COLORS.accent, padding: 12, borderRadius: 12, alignItems: 'center', marginBottom: 12 }}
+            onPress={() => setMostrarForm(!mostrarForm)}
+          >
+            <Text style={{ color: '#fff', fontWeight: '700' }}>
+              {mostrarForm ? 'Fechar' : '+ Adicionar medicamento'}
+            </Text>
+          </TouchableOpacity>
+
+          {mostrarForm && (
+            <View style={styles.card}>
+              <TextInput style={styles.formInput} placeholder="Nome (ex: Simparic)" placeholderTextColor={COLORS.subtext} value={medNome} onChangeText={setMedNome} />
+              <TextInput style={styles.formInput} placeholder="Dosagem (ex: 1 comprimido/mês)" placeholderTextColor={COLORS.subtext} value={medDosagem} onChangeText={setMedDosagem} />
+              <TextInput style={styles.formInput} placeholder="Próxima aplicação (dd/mm/aaaa)" placeholderTextColor={COLORS.subtext} value={medProxima} onChangeText={setMedProxima} keyboardType="numbers-and-punctuation" />
+              <TouchableOpacity
+                style={{ backgroundColor: COLORS.primary, padding: 12, borderRadius: 12, alignItems: 'center' }}
+                onPress={salvarMedicamento}
+                disabled={criarMedicamento.isPending}
+              >
+                {criarMedicamento.isPending
+                  ? <ActivityIndicator color="#fff" />
+                  : <Text style={{ color: '#fff', fontWeight: '700' }}>Salvar</Text>}
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {medicamentos.length === 0 && !mostrarForm && (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="medical" size={40} color={COLORS.textLight} />
+              <Text style={styles.emptyText}>Nenhum medicamento registrado</Text>
+            </View>
+          )}
           {medicamentos.map((m) => (
             <View key={m.id} style={styles.card}>
               <View style={styles.cardHeader}>
@@ -287,6 +379,9 @@ export default function Saude() {
                   <Text style={styles.cardTitle}>{m.nome}</Text>
                 </View>
                 <StatusBadge status={m.status} />
+                <TouchableOpacity onPress={() => confirmarExclusao(m.id)} style={{ marginLeft: 8 }}>
+                  <Ionicons name="trash-outline" size={18} color={COLORS.textLight} />
+                </TouchableOpacity>
               </View>
 
               <View style={styles.cardDivider} />
@@ -316,7 +411,26 @@ export default function Saude() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (COLORS) => StyleSheet.create({
+  cancelButton: {
+    marginTop: 14,
+    paddingVertical: 11,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+  },
+  cancelButtonText: { color: COLORS.accent, fontWeight: '700' },
+  cancelHint: { marginTop: 12, color: COLORS.textLight, fontSize: 12, textAlign: 'center' },
+  formInput: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
+    color: COLORS.text,
+    backgroundColor: COLORS.background,
+  },
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -382,7 +496,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginHorizontal: 16,
     marginTop: 20,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
     borderRadius: 16,
     padding: 4,
     shadowColor: '#000',
@@ -417,7 +531,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
     borderRadius: 22,
     padding: 18,
     marginBottom: 14,
@@ -436,18 +550,18 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 14,
-    backgroundColor: '#FFF0F3',
+    backgroundColor: 'rgba(230,57,99,0.10)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   cardTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.title,
   },
   cardDivider: {
     height: 1,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: COLORS.border,
     marginVertical: 14,
   },
   infoRow: {

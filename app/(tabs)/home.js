@@ -1,17 +1,23 @@
+import { useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../../context/AuthContext';
+import { usePets } from '../../hooks/usePets';
+import { useTodasVacinas } from '../../hooks/useVacinas';
+import { useAgendamentos } from '../../hooks/useAgendamentos';
+import { useMedicamentos } from '../../hooks/useMedicamentos';
+import { diasAte, formatarData, hojeISO, textoPrazo } from '../../utils/datas';
 
 import COLORS from '../../constants/colors';
+import { useTheme } from '../../context/ThemeContext';
 
 import {
   MaterialIcons,
@@ -19,80 +25,73 @@ import {
   Ionicons,
 } from '@expo/vector-icons';
 
-const proximasAcoes = [
-  {
-    id: 1,
-    icon: 'syringe',
-    iconLib: 'fa5',
-    titulo: 'Vacina V10',
-    descricao: 'Reforço em 5 dias',
-    urgente: true,
-  },
-  {
-    id: 2,
-    icon: 'local-hospital',
-    iconLib: 'material',
-    titulo: 'Consulta de retorno',
-    descricao: 'Agendada para 28/06',
-    urgente: false,
-  },
-  {
-    id: 3,
-    icon: 'medical',
-    iconLib: 'ionicon',
-    titulo: 'Vermífugo',
-    descricao: 'Próxima dose em 10 dias',
-    urgente: false,
-  },
-];
-
-const resumoSaude = [
-  { id: 1, label: 'Vacinas em dia', status: 'ok' },
-  { id: 2, label: 'Check-up pendente', status: 'alerta' },
-  { id: 3, label: 'Vermífugo em dia', status: 'ok' },
-];
-
 const statusConfig = {
-  ok: { color: '#22C55E', bg: '#F0FDF4', icon: 'checkmark-circle' },
-  alerta: { color: '#F59E0B', bg: '#FFFBEB', icon: 'warning' },
+  ok: { color: '#22C55E', bg: 'rgba(34,197,94,0.12)', icon: 'checkmark-circle' },
+  alerta: { color: '#F59E0B', bg: 'rgba(245,158,11,0.14)', icon: 'warning' },
 };
 
 export default function Home() {
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const router = useRouter();
-  const [nomeUsuario, setNomeUsuario] = useState('');
-  const [totalPets, setTotalPets] = useState(0);
+  const { user } = useAuth();
+  const nomeUsuario = user?.user_metadata?.nome ?? '';
 
-  useEffect(() => {
-    carregarUsuario();
-    carregarPets();
-  }, []);
+  const { data: pets = [], isLoading: l1 } = usePets();
+  const { data: vacinas = [], isLoading: l2 } = useTodasVacinas();
+  const { data: agendamentos = [], isLoading: l3 } = useAgendamentos();
+  const { data: medicamentos = [], isLoading: l4 } = useMedicamentos();
 
-  const carregarUsuario = async () => {
-    try {
-      const usuario = await AsyncStorage.getItem('@usuarioLogado');
-      if (usuario) {
-        const dados = JSON.parse(usuario);
-        setNomeUsuario(dados.nome);
-      }
-    } catch (e) {
-      console.log('Erro ao carregar usuário');
-    }
-  };
+  if (l1 || l2 || l3 || l4) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.background }}>
+        <ActivityIndicator size="large" color={COLORS.accent} />
+      </View>
+    );
+  }
 
-  const carregarPets = async () => {
-    try {
-      const petsSalvos = await AsyncStorage.getItem('pets');
-      if (petsSalvos) {
-        const lista = JSON.parse(petsSalvos);
-        setTotalPets(lista.length);
-      }
-    } catch (e) {
-      console.log('Erro ao carregar pets');
-    }
-  };
+  const totalPets = pets.length;
+  const totalVacinas = vacinas.length;
+  const futuros = agendamentos.filter(
+    (a) => a.status === 'agendado' && a.data_consulta >= hojeISO()
+  );
+  const totalConsultas = futuros.length;
+
+  // Próximas ações: o que vence primeiro entre vacinas, consultas e medicamentos
+  const candidatas = [
+    ...vacinas.map((v) => ({
+      id: `v-${v.id}`, data: v.proximo_reforco, icon: 'syringe', iconLib: 'fa5',
+      titulo: `Vacina ${v.nome}`, descricao: textoPrazo(v.proximo_reforco, 'Reforço'),
+    })),
+    ...futuros.map((a) => ({
+      id: `a-${a.id}`, data: a.data_consulta, icon: 'local-hospital', iconLib: 'material',
+      titulo: a.tipo, descricao: `Agendada para ${formatarData(a.data_consulta)} às ${a.horario}`,
+    })),
+    ...medicamentos.map((m) => ({
+      id: `m-${m.id}`, data: m.proxima_aplicacao, icon: 'medical', iconLib: 'ionicon',
+      titulo: m.nome, descricao: textoPrazo(m.proxima_aplicacao, 'Próxima dose'),
+    })),
+  ];
+  const proximasAcoes = candidatas
+    .sort((a, b) => a.data.localeCompare(b.data))
+    .slice(0, 3)
+    .map((a) => ({ ...a, urgente: diasAte(a.data) <= 7 }));
+
+  // Resumo de saúde calculado a partir dos dados reais
+  const vacinaProxima = vacinas.some((v) => diasAte(v.proximo_reforco) <= 30);
+  const medicamentoProximo = medicamentos.some((m) => diasAte(m.proxima_aplicacao) <= 7);
+  const resumoSaude = [
+    totalVacinas === 0
+      ? { id: 1, label: 'Nenhuma vacina registrada', status: 'alerta' }
+      : { id: 1, label: vacinaProxima ? 'Vacina com reforço próximo' : 'Vacinas em dia', status: vacinaProxima ? 'alerta' : 'ok' },
+    { id: 2, label: totalConsultas > 0 ? 'Consulta agendada' : 'Sem consulta agendada', status: totalConsultas > 0 ? 'ok' : 'alerta' },
+    ...(medicamentos.length > 0
+      ? [{ id: 3, label: medicamentoProximo ? 'Medicamento a aplicar' : 'Medicamentos em dia', status: medicamentoProximo ? 'alerta' : 'ok' }]
+      : []),
+  ];
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
 
       {/* HEADER */}
       <View style={styles.header}>
@@ -112,7 +111,7 @@ export default function Home() {
 
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>3</Text>
+            <Text style={styles.statNumber}>{totalVacinas}</Text>
             <Text style={styles.statLabel}>Vacinas</Text>
           </View>
           <View style={styles.statDivider} />
@@ -122,7 +121,7 @@ export default function Home() {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>2</Text>
+            <Text style={styles.statNumber}>{totalConsultas}</Text>
             <Text style={styles.statLabel}>Consultas</Text>
           </View>
         </View>
@@ -139,11 +138,16 @@ export default function Home() {
 
         <View style={styles.cardDivider} />
 
+        {proximasAcoes.length === 0 && (
+          <Text style={{ color: COLORS.textLight, textAlign: 'center', padding: 12 }}>
+            Nenhuma ação pendente. Registre vacinas, consultas ou medicamentos.
+          </Text>
+        )}
         {proximasAcoes.map((acao) => (
           <View key={acao.id} style={styles.acaoRow}>
             <View style={[
               styles.acaoIconBox,
-              { backgroundColor: acao.urgente ? '#FFF0F3' : COLORS.background },
+              { backgroundColor: acao.urgente ? 'rgba(230,57,99,0.10)' : COLORS.background },
             ]}>
               {acao.iconLib === 'fa5' && (
                 <FontAwesome5
@@ -251,7 +255,7 @@ export default function Home() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (COLORS) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -314,7 +318,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
     marginHorizontal: 16,
     marginTop: 20,
     padding: 18,
@@ -334,18 +338,18 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 14,
-    backgroundColor: '#FFF0F3',
+    backgroundColor: 'rgba(230,57,99,0.10)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   cardTitle: {
     fontSize: 17,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.title,
   },
   cardDivider: {
     height: 1,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: COLORS.border,
     marginVertical: 14,
   },
   acaoRow: {
@@ -372,7 +376,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   urgenteTag: {
-    backgroundColor: '#FFF0F3',
+    backgroundColor: 'rgba(230,57,99,0.10)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 99,
@@ -401,11 +405,11 @@ const styles = StyleSheet.create({
   servicesTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.title,
     marginBottom: 12,
   },
   serviceButton: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.card,
     padding: 16,
     borderRadius: 18,
     marginBottom: 10,
@@ -427,13 +431,13 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 14,
-    backgroundColor: '#FFF0F3',
+    backgroundColor: 'rgba(230,57,99,0.10)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   serviceText: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.primary,
+    color: COLORS.title,
   },
 });
