@@ -115,7 +115,7 @@ O APK é gerado na nuvem do Expo. Depois, ele é enviado ao Firebase App Distrib
 ## Vídeo de demonstração
 
 - **Sprint 3:** [vídeo no YouTube](https://youtu.be/BtLmnragaQ8)
-- **Sprint 4:** <LINK_VIDEO_SPRINT4>
+- **Sprint 4:** <https://youtu.be/o7HpTU6-3nA> 
 
 ## Integrantes
 
