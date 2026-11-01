@@ -53,7 +53,7 @@ Fluxo de dados: **Tela → hook (TanStack Query) → service (Supabase) → banc
 ## Versão publicada
 
 - **Distribuição:** Firebase App Distribution (grupo de testadores com o professor cadastrado).
-- **Link do convite:** <LINK_FIREBASE>
+- **Link do convite:** convite enviado por email aos professores/ testadores.
 - **Commit da versão publicada:** `1ffd9e1cd81e98fe3aae210cdedbfc33aa92a721` (exibido em Perfil → Sobre o App). Commits posteriores alteram apenas a documentação.
 
 ## Como rodar o projeto
